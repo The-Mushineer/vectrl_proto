@@ -1,6 +1,16 @@
 #include "serial.h"
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <fcntl.h>
+#include <termios.h>
+#include <unistd.h>
+#endif
 
 #define NUM_BUTTONS 3
+#ifdef _WIN32
+const int button_keys[NUM_BUTTONS] = { VK_RIGHT, VK_SPACE, VK_LEFT };
+#endif
 
 //----------------------------------------------------------------------
 // SerialPort
@@ -144,6 +154,14 @@ void *SerialThread::Entry()
         for(int i=0; i < NUM_BUTTONS; i++) {
             if (changed_buttons & (1 << i)) {
                 wxLogMessage("Button %d: %s", i+1, (data[0] & (1 << i)) ? "pressed" : "released");
+#ifdef _WIN32
+                INPUT input;
+                memset(&input, 0, sizeof(input));
+                input.type = INPUT_KEYBOARD;
+                input.ki.wVk = button_keys[i];
+                input.ki.dwFlags = (data[0] & (1 << i)) ? 0 : KEYEVENTF_KEYUP;
+                SendInput(1, &input, sizeof(input));
+#endif
             }
         }
     }
