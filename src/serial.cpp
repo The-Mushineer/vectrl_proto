@@ -7,10 +7,45 @@
 #include <unistd.h>
 #endif
 
-#define NUM_BUTTONS 3
+#define NUM_BUTTONS 4
+#define NUM_ENCODERS 1
 #ifdef _WIN32
-const int button_keys[NUM_BUTTONS] = { VK_RIGHT, VK_SPACE, VK_LEFT };
+const WORD button_keys[NUM_BUTTONS] = { /*';'*/VK_OEM_2, VK_SPACE, /*'\''*/VK_OEM_3, VK_SPACE };
+const WORD encoder_keys[NUM_ENCODERS][2] = { { VK_RIGHT, VK_LEFT } };
 #endif
+
+//----------------------------------------------------------------------
+
+static void issueKey(int button_number, bool pressed) {
+#ifdef _WIN32
+    INPUT input;
+    memset(&input, 0, sizeof(input));
+    input.type = INPUT_KEYBOARD;
+    input.ki.wVk = button_keys[button_number];
+    input.ki.dwFlags = pressed ? 0 : KEYEVENTF_KEYUP;
+    SendInput(1, &input, sizeof(input));
+#endif
+}
+
+static void issueEncoder(int encoder_number, int8_t count) {
+#ifdef _WIN32
+    INPUT input[2];
+    WORD key = count > 0 ? encoder_keys[encoder_number][0] : encoder_keys[encoder_number][1];
+    uint8_t abs_count = count > 0 ? count : -count;
+    memset(input, 0, sizeof(input));
+    input[0].type = INPUT_KEYBOARD;
+    input[0].ki.wVk = key;
+    input[0].ki.dwFlags = 0;
+    input[1].type = INPUT_KEYBOARD;
+    input[1].ki.wVk = key;
+    input[1].ki.dwFlags = KEYEVENTF_KEYUP;
+    for (uint8_t i = 0; i < abs_count; i++) {
+        wxLogMessage("Sending input %d", key);
+        SendInput(1, input, sizeof(input[0]));
+        SendInput(1, input + 1, sizeof(input[1]));
+    }
+#endif
+}
 
 //----------------------------------------------------------------------
 // SerialPort
@@ -114,7 +149,7 @@ void SerialPort::Write(uint8_t *data, size_t size)
 size_t SerialPort::Read(uint8_t *data, size_t size)
 {
     #ifdef _WIN32
-    DWORD read;
+    DWORD read = 0;
     ReadFile(m_handle, data, size, &read, NULL);
     return read;
     #else
@@ -134,6 +169,13 @@ SerialThread::SerialThread(wxFrame *frame, wxString portName)
 {
 }
 
+const uint8_t START_PACKET = 0xE9;
+enum MessageType {
+  MSG_BTN_DOWN = 1,
+  MSG_BTN_UP = 2,
+  MSG_TURN = 3,
+};
+
 void *SerialThread::Entry()
 {
     if (!m_serialPort.Open()) {
@@ -141,28 +183,76 @@ void *SerialThread::Entry()
         return NULL;
     }
     while (!TestDestroy() && !m_terminate) {
-        uint8_t data[1];
-        size_t read = m_serialPort.Read(data, sizeof(data));
-        if (read == 0) {
+        uint8_t data[3];
+        uint8_t checksum = 0;
+        // Checks if a packet is available
+        size_t read = m_serialPort.Read(data, 1);
+        if (read != 1 || data[0] != START_PACKET) {
             continue;
         }
-        uint8_t changed_buttons = data[0] ^ m_buttons;
-        m_buttons = data[0];
-        if (changed_buttons == 0) {
+        checksum += data[0];
+        // Reads the message type
+        read = m_serialPort.Read(data, 1);
+        if (read != 1) {
             continue;
         }
-        for(int i=0; i < NUM_BUTTONS; i++) {
-            if (changed_buttons & (1 << i)) {
-                wxLogMessage("Button %d: %s", i+1, (data[0] & (1 << i)) ? "pressed" : "released");
-#ifdef _WIN32
-                INPUT input;
-                memset(&input, 0, sizeof(input));
-                input.type = INPUT_KEYBOARD;
-                input.ki.wVk = button_keys[i];
-                input.ki.dwFlags = (data[0] & (1 << i)) ? 0 : KEYEVENTF_KEYUP;
-                SendInput(1, &input, sizeof(input));
-#endif
+        uint8_t messageType = data[0];
+        checksum += data[0];
+        switch (messageType) {
+            case MSG_BTN_DOWN: {
+                // Button was pressed, reads the rest of the message
+                read = m_serialPort.Read(data, 2);
+                if (read != 2) {
+                    continue;
+                }
+                checksum += data[0];
+                // Checks the checksum
+                if (checksum != data[1]) {
+                    continue;
+                }
+                // Issues the key
+                issueKey(data[0], true);
+                m_buttons |= (1 << data[0]);
+                wxLogMessage("Button %d: pressed", data[0]);
+                break;
             }
+            case MSG_BTN_UP: {
+                // Button was released, reads the rest of the message
+                read = m_serialPort.Read(data, 2);
+                if (read != 2) {
+                    continue;
+                }
+                checksum += data[0];
+                // Checks the checksum
+                if (checksum != data[1]) {
+                    continue;
+                }
+                // Issues the key
+                issueKey(data[0], false);
+                m_buttons &= ~(1 << data[0]);
+                wxLogMessage("Button %d: released", data[0]);
+                break;
+            }
+            case MSG_TURN: {
+                // Button was released, reads the rest of the message
+                read = m_serialPort.Read(data, 3);
+                if (read != 3) {
+                    continue;
+                }
+                checksum += data[0] + data[1];
+                // Checks the checksum
+                if (checksum != data[2]) {
+                    continue;
+                }
+                // Issues the key
+                int8_t count = data[1];
+                issueEncoder(data[0], count);
+                wxLogMessage("Dial %d: %d", data[0], count);
+                break;
+            }
+            default:
+                wxLogError("Unknown message type: %d", messageType);
+                break;
         }
     }
     return NULL;
