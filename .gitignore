@@ -33,3 +33,10 @@
 
 # Build files
 build/
+
+# Visual Studio Code
+.vscode/*
+!.vscode/tasks.json
+!.vscode/launch.json
+.history/
+*.vsix
