@@ -7,46 +7,6 @@
 #include <unistd.h>
 #endif
 
-#define NUM_BUTTONS 4
-#define NUM_ENCODERS 1
-#ifdef _WIN32
-const WORD button_keys[NUM_BUTTONS] = { /*';'*/VK_OEM_2, VK_SPACE, /*'\''*/VK_OEM_3, VK_SPACE };
-const WORD encoder_keys[NUM_ENCODERS][2] = { { VK_RIGHT, VK_LEFT } };
-#endif
-
-//----------------------------------------------------------------------
-
-static void issueKey(int button_number, bool pressed) {
-#ifdef _WIN32
-    INPUT input;
-    memset(&input, 0, sizeof(input));
-    input.type = INPUT_KEYBOARD;
-    input.ki.wVk = button_keys[button_number];
-    input.ki.dwFlags = pressed ? 0 : KEYEVENTF_KEYUP;
-    SendInput(1, &input, sizeof(input));
-#endif
-}
-
-static void issueEncoder(int encoder_number, int8_t count) {
-#ifdef _WIN32
-    INPUT input[2];
-    WORD key = count > 0 ? encoder_keys[encoder_number][0] : encoder_keys[encoder_number][1];
-    uint8_t abs_count = count > 0 ? count : -count;
-    memset(input, 0, sizeof(input));
-    input[0].type = INPUT_KEYBOARD;
-    input[0].ki.wVk = key;
-    input[0].ki.dwFlags = 0;
-    input[1].type = INPUT_KEYBOARD;
-    input[1].ki.wVk = key;
-    input[1].ki.dwFlags = KEYEVENTF_KEYUP;
-    for (uint8_t i = 0; i < abs_count; i++) {
-        wxLogMessage("Sending input %d", key);
-        SendInput(1, input, sizeof(input[0]));
-        SendInput(1, input + 1, sizeof(input[1]));
-    }
-#endif
-}
-
 //----------------------------------------------------------------------
 // SerialPort
 //----------------------------------------------------------------------
@@ -161,11 +121,11 @@ size_t SerialPort::Read(uint8_t *data, size_t size)
 // SerialThread
 //----------------------------------------------------------------------
 
-SerialThread::SerialThread(wxFrame *frame, wxString portName)
+SerialThread::SerialThread(wxFrame *frame, wxString portName, Actions *actions)
     : wxThread(wxTHREAD_JOINABLE),
       m_frame(frame),
-      m_buttons(0),
-      m_serialPort(portName)
+      m_serialPort(portName),
+      m_actions(actions)
 {
 }
 
@@ -211,9 +171,10 @@ void *SerialThread::Entry()
                     continue;
                 }
                 // Issues the key
-                issueKey(data[0], true);
-                m_buttons |= (1 << data[0]);
                 wxLogMessage("Button %d: pressed", data[0]);
+                if (m_actions) {
+                    m_actions->IssueButton(data[0], true);
+                }
                 break;
             }
             case MSG_BTN_UP: {
@@ -228,9 +189,10 @@ void *SerialThread::Entry()
                     continue;
                 }
                 // Issues the key
-                issueKey(data[0], false);
-                m_buttons &= ~(1 << data[0]);
                 wxLogMessage("Button %d: released", data[0]);
+                if (m_actions) {
+                    m_actions->IssueButton(data[0], false);
+                }
                 break;
             }
             case MSG_TURN: {
@@ -246,8 +208,10 @@ void *SerialThread::Entry()
                 }
                 // Issues the key
                 int8_t count = data[1];
-                issueEncoder(data[0], count);
                 wxLogMessage("Dial %d: %d", data[0], count);
+                if (m_actions) {
+                    m_actions->IssueEncoder(data[0], count);
+                }
                 break;
             }
             default:

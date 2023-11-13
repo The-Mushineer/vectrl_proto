@@ -20,6 +20,8 @@ set(SRC_FILES
     src/main.cpp
     src/serial.cpp
     src/serial.h
+    src/actions.cpp
+    src/actions.h
     )
 
 # if(WIN32)

@@ -14,6 +14,8 @@
 #include "wx/thread.h"
 #include <atomic>
 
+#include "actions.h"
+
 class SerialPort {
 public:
     SerialPort(wxString portName);
@@ -35,7 +37,7 @@ private:
 class SerialThread : public wxThread
 {
 public:
-    SerialThread(wxFrame *frame, wxString portName);
+    SerialThread(wxFrame *frame, wxString portName, Actions *actions);
 
     virtual void *Entry() override;
 
@@ -45,7 +47,7 @@ public:
 
 private:
     wxFrame *m_frame;
-    uint8_t m_buttons;
+    Actions *m_actions;
     SerialPort m_serialPort;
     std::atomic<bool> m_terminate;
 };

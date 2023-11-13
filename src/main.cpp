@@ -9,6 +9,7 @@
 #endif // wxUSE_THREADS
 
 #include "serial.h"
+#include "actions.h"
 
 class ControllerApp : public wxApp
 {
@@ -46,6 +47,7 @@ private:
     wxLog *m_oldLogger;
     wxCriticalSection m_critsect;
     SerialThread *m_serialThread;
+    Actions m_actions;
     wxDECLARE_EVENT_TABLE();
 };
 
@@ -106,6 +108,14 @@ bool ControllerApp::OnInit()
 MainFrame::MainFrame(const wxString& title)
        : wxFrame(nullptr, wxID_ANY, title), m_serialThread(nullptr)
 {
+    m_actions.SetButtonKeystroke(0, Keystroke(VK_OEM_2, false, false, false));
+    //m_actions.SetButtonKeystroke(1, Keystroke(VK_SPACE, false, false, false));
+    m_actions.SetButtonKeystroke(2, Keystroke(VK_OEM_3, false, false, false));
+    m_actions.SetButtonKeystroke(3, Keystroke(VK_SPACE, false, false, false));
+    m_actions.SetEncoderKeystroke(0, ENCODER_CW, Keystroke(VK_RIGHT, false, false, false));
+    m_actions.SetModifiedEncoderKeystroke(0, 1, ENCODER_CW, Keystroke(VK_RIGHT, false, false, true));
+    m_actions.SetEncoderKeystroke(0, ENCODER_CCW, Keystroke(VK_LEFT, false, false, false));
+    m_actions.SetModifiedEncoderKeystroke(0, 1, ENCODER_CCW, Keystroke(VK_LEFT, false, false, true));
     m_oldLogger = wxLog::GetActiveTarget();
     //SetIcon(wxICON(sample));
 
@@ -238,7 +248,7 @@ void MainFrame::OnStartWatching(wxCommandEvent& WXUNUSED(event))
         wxCriticalSectionLocker locker(m_critsect);
         if ( m_serialThread )
             return;
-        m_serialThread = new SerialThread(this, "\\\\.\\COM4");
+        m_serialThread = new SerialThread(this, "\\\\.\\COM4", &m_actions);
         m_serialThread->Run();
 }
 
