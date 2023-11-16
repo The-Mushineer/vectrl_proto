@@ -9,6 +9,7 @@ const size_t BUTTON_COUNT = 4;
 const int BUTTON_PINS[BUTTON_COUNT] = { 8, 9, 10, 11 };
 const int ENCODER1_PINS[2] = { 2, 3 };
 const uint32_t ENCODER_INTERVAL = 10;
+const uint32_t BUTTON_DEBOUNCE_INTERVAL = 20;
 
 volatile int8_t encoder1_count = 0;
 
@@ -50,6 +51,7 @@ void setup() {
 void loop() {
   static uint8_t buttons = 0;
   static uint32_t last_enc_check = 0;
+  static uint32_t last_btn_change = 0;
   uint32_t current_time = millis();
 
   if (current_time - last_enc_check > ENCODER_INTERVAL) {
@@ -66,11 +68,17 @@ void loop() {
 
   uint8_t newButtons = 0;
   for (size_t idx = 0; idx < BUTTON_COUNT; idx++) {
-    bool pressed = !digitalRead(BUTTON_PINS[idx]) != LOW;
+    bool pressed = digitalRead(BUTTON_PINS[idx]) == LOW;
     newButtons |= pressed << idx;
-    if (pressed != ((buttons >> idx) & 1)) {
-      sendButtonEvent(idx, pressed);
-    }
   }
-  buttons = newButtons;
+  if (newButtons != buttons && current_time - last_btn_change > BUTTON_DEBOUNCE_INTERVAL) {
+    last_btn_change = current_time;
+    for (size_t idx = 0; idx < BUTTON_COUNT; idx++) {
+      auto pressed = ((newButtons >> idx) & 1);
+      if (pressed != ((buttons >> idx) & 1)) {
+        sendButtonEvent(idx, pressed);
+      }
+    }
+    buttons = newButtons;
+  }
 }
