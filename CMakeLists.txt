@@ -14,7 +14,9 @@ endif()
 project(vectrl_proto)
 
 set(wxBUILD_SHARED OFF)
+set(BUILD_SHARED_LIBS OFF)
 add_subdirectory(libs/wxWidgets)
+add_subdirectory(libs/hidapi)
 
 set(SRC_FILES
     src/main.cpp
@@ -31,8 +33,7 @@ set(SRC_FILES
 # endif()
 
 add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE ${SRC_FILES})
-target_include_directories(${PROJECT_NAME} PUBLIC "libs/wxSerialPort")
-target_link_libraries(${PROJECT_NAME} wx::net wx::core wx::base)
+target_link_libraries(${PROJECT_NAME} wx::net wx::core wx::base hidapi::hidapi)
 
 # if(APPLE)
 #     set_target_properties(${PROJECT_NAME} PROPERTIES
