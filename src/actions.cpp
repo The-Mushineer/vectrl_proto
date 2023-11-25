@@ -107,33 +107,13 @@ Keystroke Action::GetDesiredKeystroke(std::unordered_set<uint8_t> pressed_keys) 
 
 Actions::Actions(): m_button_actions(), m_encoder_actions(), m_pressed_buttons() {}
 
-void Actions::SetButtonKeystroke(uint8_t button, Keystroke action) {
-    wxCriticalSectionLocker locker(m_button_critsect);
-    m_button_actions[button].SetKeystroke(action);
-}
-
-void Actions::SetModifiedButtonKeystroke(uint8_t button, uint8_t modifier, Keystroke action) {
-    wxCriticalSectionLocker locker(m_button_critsect);
-    m_button_actions[button].SetModifiedKeystroke(modifier, action);
-}
-
-void Actions::SetEncoderKeystroke(uint8_t encoder, EncoderDirection direction, Keystroke action) {
-    wxCriticalSectionLocker locker(m_encoder_critsect);
-    m_encoder_actions[encoder][direction].SetKeystroke(action);
-}
-
-void Actions::SetModifiedEncoderKeystroke(uint8_t encoder, uint8_t modifier, EncoderDirection direction, Keystroke action) {
-    wxCriticalSectionLocker locker(m_encoder_critsect);
-    m_encoder_actions[encoder][direction].SetModifiedKeystroke(modifier, action);
-}
-
  Keystroke Actions::GetButtonKeystroke(uint8_t button) {
-    wxCriticalSectionLocker locker(m_button_critsect);
+    wxCriticalSectionLocker locker(m_actions_critsect);
     return m_button_actions[button].GetDesiredKeystroke(m_pressed_buttons);
 }
 
 Keystroke Actions::GetEncoderKeystroke(uint8_t encoder, EncoderDirection direction) {
-    wxCriticalSectionLocker locker(m_encoder_critsect);
+    wxCriticalSectionLocker locker(m_actions_critsect);
     return m_encoder_actions[encoder][direction].GetDesiredKeystroke(m_pressed_buttons);
 }
 
@@ -150,6 +130,12 @@ void Actions::IssueButton(uint8_t button, bool pressed) {
     if (keystroke != KEYSTROKE_NONE) {
         issueKeystroke(keystroke, pressed);
     }
+}
+
+void Actions::LoadTemplate(const ActionsTemplate& actions_template) {
+    wxCriticalSectionLocker locker(m_actions_critsect);
+    m_button_actions = actions_template.button_actions;
+    m_encoder_actions = actions_template.encoder_actions;
 }
 
 void Actions::IssueEncoder(uint8_t encoder, int8_t count) {

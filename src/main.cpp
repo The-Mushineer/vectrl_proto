@@ -48,6 +48,7 @@ private:
     wxCriticalSection m_critsect;
     SerialThread *m_serialThread;
     Actions m_actions;
+    ActionsTemplate m_current_template;
     wxDECLARE_EVENT_TABLE();
 };
 
@@ -108,14 +109,16 @@ bool ControllerApp::OnInit()
 MainFrame::MainFrame(const wxString& title)
        : wxFrame(nullptr, wxID_ANY, title), m_serialThread(nullptr)
 {
-    m_actions.SetButtonKeystroke(0, Keystroke(VK_OEM_2, false, false, false));
-    //m_actions.SetButtonKeystroke(1, Keystroke(VK_SPACE, false, false, false));
-    m_actions.SetButtonKeystroke(2, Keystroke(VK_OEM_3, false, false, false));
-    m_actions.SetButtonKeystroke(3, Keystroke(VK_SPACE, false, false, false));
-    m_actions.SetEncoderKeystroke(0, ENCODER_CW, Keystroke(VK_RIGHT, false, false, false));
-    m_actions.SetModifiedEncoderKeystroke(0, 1, ENCODER_CW, Keystroke(VK_RIGHT, false, false, true));
-    m_actions.SetEncoderKeystroke(0, ENCODER_CCW, Keystroke(VK_LEFT, false, false, false));
-    m_actions.SetModifiedEncoderKeystroke(0, 1, ENCODER_CCW, Keystroke(VK_LEFT, false, false, true));
+    m_current_template.button_actions[0].SetKeystroke(Keystroke(VK_OEM_2, false, false, false));
+    //m_current_template.button_actions[1].SetKeystroke(Keystroke(VK_SPACE, false, false, false));
+    m_current_template.button_actions[2].SetKeystroke(Keystroke(VK_OEM_3, false, false, false));
+    m_current_template.button_actions[3].SetKeystroke(Keystroke(VK_SPACE, false, false, false));
+    m_current_template.encoder_actions[0][ENCODER_CW].SetKeystroke(Keystroke(VK_RIGHT, false, false, false));
+    m_current_template.encoder_actions[0][ENCODER_CW].SetModifiedKeystroke(1, Keystroke(VK_RIGHT, false, false, true));
+    m_current_template.encoder_actions[0][ENCODER_CCW].SetKeystroke(Keystroke(VK_LEFT, false, false, false));
+    m_current_template.encoder_actions[0][ENCODER_CCW].SetModifiedKeystroke(1, Keystroke(VK_LEFT, false, false, true));
+
+    m_actions.LoadTemplate(m_current_template);
     m_oldLogger = wxLog::GetActiveTarget();
     //SetIcon(wxICON(sample));
 

@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <map>
 #include <unordered_set>
+#include <array>
 
 #include "wx/wxprec.h"
 
@@ -52,28 +53,34 @@ private:
     std::map<uint8_t, Keystroke> m_modifier_keystrokes;
 };
 
+class ActionsTemplate {
+public:
+    std::array<Action, MAX_BUTTONS> button_actions;
+    std::array<std::array<Action, 2>, MAX_ENCODERS> encoder_actions;
+
+    size_t GetButtonCount() const { return MAX_BUTTONS; }
+    size_t GetEncoderCount() const { return MAX_ENCODERS; }
+};
+
 class Actions {
 public:
     Actions();
 
-    void SetButtonKeystroke(uint8_t button, Keystroke action);
-    void SetModifiedButtonKeystroke(uint8_t button, uint8_t modifier, Keystroke action);
-    void SetEncoderKeystroke(uint8_t encoder, EncoderDirection direction, Keystroke action);
-    void SetModifiedEncoderKeystroke(uint8_t encoder, uint8_t modifier, EncoderDirection direction, Keystroke action);
     Keystroke GetButtonKeystroke(uint8_t button);
     Keystroke GetEncoderKeystroke(uint8_t encoder, EncoderDirection direction);
 
-    size_t GetButtonCount() { return MAX_BUTTONS; }
-    size_t GetEncoderCount() { return MAX_ENCODERS; }
+    size_t GetButtonCount() const { return MAX_BUTTONS; }
+    size_t GetEncoderCount() const { return MAX_ENCODERS; }
 
     void IssueButton(uint8_t button, bool pressed);
     void IssueEncoder(uint8_t encoder, int8_t count);
+
+    void LoadTemplate(const ActionsTemplate& actions_template);
 private:
-    Action m_button_actions[MAX_BUTTONS];
-    Action m_encoder_actions[MAX_ENCODERS][2];
+    std::array<Action, MAX_BUTTONS> m_button_actions;
+    std::array<std::array<Action, 2>, MAX_ENCODERS> m_encoder_actions;
     std::unordered_set<uint8_t> m_pressed_buttons;
-    wxCriticalSection m_button_critsect;
-    wxCriticalSection m_encoder_critsect;
+    wxCriticalSection m_actions_critsect;
     wxCriticalSection m_pressed_critsect;
 };
 
