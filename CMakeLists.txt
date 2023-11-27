@@ -22,8 +22,12 @@ set(SRC_FILES
     src/main.cpp
     src/serial.cpp
     src/serial.h
+    src/usb.cpp
+    src/usb.h
     src/actions.cpp
     src/actions.h
+    src/thread_utils.cpp
+    src/thread_utils.h
     )
 
 # if(WIN32)

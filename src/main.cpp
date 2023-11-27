@@ -8,7 +8,7 @@
     #error "This sample requires thread support!"
 #endif // wxUSE_THREADS
 
-#include "serial.h"
+#include "usb.h"
 #include "actions.h"
 
 class ControllerApp : public wxApp
@@ -41,12 +41,13 @@ private:
     void OnAbout(wxCommandEvent& event);
     void OnStartWatching(wxCommandEvent& event);
     void OnStopWatching(wxCommandEvent& event);
+    void OnThreadMessage(wxThreadEvent& event);
 
 private:
     wxTextCtrl *m_txtctrl;
     wxLog *m_oldLogger;
     wxCriticalSection m_critsect;
-    SerialThread *m_serialThread;
+    USBManagerThread *m_usbThread;
     Actions m_actions;
     ActionsTemplate m_current_template;
     wxDECLARE_EVENT_TABLE();
@@ -59,11 +60,14 @@ private:
 // IDs for the controls and the menu commands
 enum
 {
-    // menu items
+    // Menu items
     App_Quit = wxID_EXIT,
     App_About = wxID_ABOUT,
     App_StartWatching = 101,
     App_StopWatching,
+    // Thread commands
+    Thread_Connected = 201,
+    Thread_Disconnected,
 };
 
 // ----------------------------------------------------------------------------
@@ -75,6 +79,7 @@ wxBEGIN_EVENT_TABLE(MainFrame, wxFrame)
     EVT_MENU(App_About, MainFrame::OnAbout)
     EVT_MENU(App_StartWatching,  MainFrame::OnStartWatching)
     EVT_MENU(App_StopWatching, MainFrame::OnStopWatching)
+    EVT_THREAD(wxID_ANY, MainFrame::OnThreadMessage)
 wxEND_EVENT_TABLE()
 
 wxIMPLEMENT_APP(ControllerApp);
@@ -107,7 +112,7 @@ bool ControllerApp::OnInit()
 // ----------------------------------------------------------------------------
 
 MainFrame::MainFrame(const wxString& title)
-       : wxFrame(nullptr, wxID_ANY, title), m_serialThread(nullptr)
+       : wxFrame(nullptr, wxID_ANY, title), m_usbThread(nullptr)
 {
     m_current_template.button_actions[0].SetKeystroke(Keystroke(VK_OEM_2, false, false, false));
     //m_current_template.button_actions[1].SetKeystroke(Keystroke(VK_SPACE, false, false, false));
@@ -126,8 +131,8 @@ MainFrame::MainFrame(const wxString& title)
     wxMenu *fileMenu = new wxMenu;
     wxMenu *helpMenu = new wxMenu;
     helpMenu->Append(App_About, "&About\tF1", "Show about dialog");
-    fileMenu->Append(App_StartWatching, "Start", "Start listening to the serial port");
-    fileMenu->Append(App_StopWatching, "Stop", "Stop listening to the serial port");
+    fileMenu->Append(App_StartWatching, "Start", "Start listening to USB devices");
+    fileMenu->Append(App_StopWatching, "Stop", "Stop listening to USB devices");
     fileMenu->AppendSeparator();
     fileMenu->Append(App_Quit, "E&xit\tAlt-X", "Quit this program");
     
@@ -154,7 +159,7 @@ MainFrame::MainFrame(const wxString& title)
                                         wxTE_READONLY);
     DoLogLine(header, "  Time", " Thread", "Message");
     m_txtctrl = new wxTextCtrl(this, wxID_ANY, "",
-                               wxDefaultPosition, wxDefaultSize,
+                               wxDefaultPosition, wxSize(100, 100),
                                wxTE_MULTILINE | wxTE_READONLY);
     wxLog::SetActiveTarget(this);
 
@@ -168,10 +173,12 @@ MainFrame::MainFrame(const wxString& title)
     // layout and show the frame
     wxBoxSizer *sizer = new wxBoxSizer(wxVERTICAL);
     sizer->Add(header, wxSizerFlags().Expand());
-    sizer->Add(m_txtctrl, wxSizerFlags(1).Expand());
+    sizer->Add(m_txtctrl, wxSizerFlags().Expand());
     SetSizer(sizer);
 
     SetSize(600, 350);
+    wxMenuEvent event{ wxEVT_MENU, App_StartWatching, nullptr };
+    AddPendingEvent(event);
 }
 
 MainFrame::~MainFrame()
@@ -179,12 +186,12 @@ MainFrame::~MainFrame()
     wxLog::SetActiveTarget(m_oldLogger);
     {
         wxCriticalSectionLocker locker(m_critsect);
-        if ( !m_serialThread )
+        if ( !m_usbThread )
             return;
-        m_serialThread->Terminate();
-        m_serialThread->Wait();
-        delete m_serialThread;
-        m_serialThread = nullptr;
+        m_usbThread->Terminate();
+        m_usbThread->Wait();
+        delete m_usbThread;
+        m_usbThread = nullptr;
     }
 }
 
@@ -249,20 +256,24 @@ void MainFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 void MainFrame::OnStartWatching(wxCommandEvent& WXUNUSED(event))
 {
         wxCriticalSectionLocker locker(m_critsect);
-        if ( m_serialThread )
+        if ( m_usbThread )
             return;
-        m_serialThread = new SerialThread(this, "\\\\.\\COM4", &m_actions);
-        m_serialThread->Run();
+        //m_usbThread = new SerialThread(this, "\\\\.\\COM4", &m_actions);
+        m_usbThread = new USBManagerThread(this, &m_actions);
+        m_usbThread->Run();
 }
 
 void MainFrame::OnStopWatching(wxCommandEvent& WXUNUSED(event))
 {
         wxCriticalSectionLocker locker(m_critsect);
-        if ( !m_serialThread )
+        if ( !m_usbThread )
             return;
-        m_serialThread->Terminate();
-        m_serialThread->Wait();
-        delete m_serialThread;
-        m_serialThread = nullptr;
+        m_usbThread->Terminate();
+        m_usbThread->Wait();
+        delete m_usbThread;
+        m_usbThread = nullptr;
 }
+
+
+void MainFrame::OnThreadMessage(wxThreadEvent& event) {}
 
