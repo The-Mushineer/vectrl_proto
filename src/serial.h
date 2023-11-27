@@ -4,14 +4,12 @@
 #include "wx/wxprec.h"
 
 #ifndef WX_PRECOMP
-    #include "wx/wx.h"
+    #include "wx/thread.h"
 #endif
 
 #if !wxUSE_THREADS
-    #error "This sample requires thread support!"
+    #error "This program requires thread support!"
 #endif // wxUSE_THREADS
-
-#include "wx/thread.h"
 #include <atomic>
 
 #include "actions.h"
