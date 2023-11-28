@@ -17,12 +17,12 @@ const size_t MAX_BUTTONS = 8;
 const size_t MAX_ENCODERS = 2;
 
 struct Keystroke {
-    uint16_t key;
+    int key;
     bool ctrl;
     bool alt;
     bool shift;
 
-    Keystroke(uint16_t _key, bool _ctrl, bool _alt, bool _shift): key(_key), ctrl(_ctrl), alt(_alt), shift(_shift) {};
+    Keystroke(int _key, bool _ctrl, bool _alt, bool _shift): key(_key), ctrl(_ctrl), alt(_alt), shift(_shift) {};
     Keystroke(): key(0), ctrl(false), alt(false), shift(false) {};
 
     bool operator==(const Keystroke& other) const {

@@ -1,29 +1,15 @@
 #include "actions.h"
 #include <windows.h>
 
-static bool isExtended(uint16_t vk_code) {
-    switch (vk_code) {
-        case VK_LEFT:
-        case VK_UP:
-        case VK_RIGHT:
-        case VK_DOWN:
-        case VK_PRIOR:
-        case VK_NEXT:
-        case VK_END:
-        case VK_HOME:
-        case VK_INSERT:
-        case VK_DELETE:
-        case VK_DIVIDE:
-        case VK_NUMLOCK:
-            return true;
-    }
-    return false;
-}
+// Uses the private wxWidgets function WXToVK to convert a wxWidgets keycode to a Windows virtual key code.
+// Might be better to implement this ourselves, but this is easier for now.
+#include <wx/msw/private/keyboard.h>
 
 void issueKeystroke(Keystroke keystroke, bool pressed) {
     INPUT input[4];
     size_t num_keys = 0;
     DWORD dwFlags = pressed ? 0 : KEYEVENTF_KEYUP;
+    bool isExtended = false;
     memset(input, 0, sizeof(input));
     if (keystroke.ctrl) {
         input[num_keys].type = INPUT_KEYBOARD;
@@ -44,8 +30,8 @@ void issueKeystroke(Keystroke keystroke, bool pressed) {
         num_keys++;
     }
     input[num_keys].type = INPUT_KEYBOARD;
-    input[num_keys].ki.wVk = keystroke.key;
-    input[num_keys].ki.dwFlags = dwFlags | (isExtended(keystroke.key) ? KEYEVENTF_EXTENDEDKEY : 0);
+    input[num_keys].ki.wVk = wxMSWKeyboard::WXToVK(keystroke.key, &isExtended);
+    input[num_keys].ki.dwFlags = dwFlags | (isExtended ? KEYEVENTF_EXTENDEDKEY : 0);
     num_keys++;
     if (!pressed) {
         std::reverse(input, input + num_keys);
