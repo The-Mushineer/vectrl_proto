@@ -20,8 +20,6 @@ add_subdirectory(libs/hidapi)
 
 set(SRC_FILES
     src/main.cpp
-    src/serial.cpp
-    src/serial.h
     src/usb.cpp
     src/usb.h
     src/actions.cpp
