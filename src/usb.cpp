@@ -1,5 +1,5 @@
-#include <hidapi.h>
 #include "usb.h"
+#include <hidapi.h>
 
 static class USBLib {
 public:

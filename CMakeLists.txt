@@ -28,6 +28,22 @@ set(SRC_FILES
     src/thread_utils.h
     )
 
+set(SRC_FILES_WIN
+    src/actions_win.cpp
+    )
+
+set(SRC_FILES_LINUX)
+
+set(SRC_FILES_MACOSX)
+
+if(WIN32)
+    list(APPEND SRC_FILES ${SRC_FILES_WIN})
+elseif(APPLE)
+    list(APPEND SRC_FILES ${SRC_FILES_MACOSX})
+elseif(LINUX)
+    list(APPEND SRC_FILES ${SRC_FILES_LINUX})
+endif()
+
 # if(WIN32)
 #     list(APPEND SRC_FILES ../sample.rc)
 # elseif(APPLE)

@@ -1,16 +1,17 @@
 #ifndef __VECTRL_ACTIONS_H__
 #define __VECTRL_ACTIONS_H__
-#include <cstdint>
-#include <map>
-#include <unordered_set>
-#include <array>
 
 #include "wx/wxprec.h"
 
 #ifndef WX_PRECOMP
-    #include "wx/thread.h"
-    #include "wx/log.h"
+#include "wx/thread.h"
+#include "wx/log.h"
 #endif
+
+#include <cstdint>
+#include <map>
+#include <unordered_set>
+#include <array>
 
 const size_t MAX_BUTTONS = 8;
 const size_t MAX_ENCODERS = 2;
@@ -83,5 +84,7 @@ private:
     wxCriticalSection m_actions_critsect;
     wxCriticalSection m_pressed_critsect;
 };
+
+void issueKeystroke(Keystroke keystroke, bool pressed);
 
 #endif
