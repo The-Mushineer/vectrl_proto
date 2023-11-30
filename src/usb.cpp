@@ -104,14 +104,14 @@ void *USBDeviceThread::Entry() {
         // Checks if a packet is available
         int read = hid_read_timeout(dev, data, 10, 10);
 
-        if (read < 2) {
-            continue;
-        }
-
         if (read < 0) {
             // An error occurred
             wxLogError("Error reading from device %s", m_path);
             break;
+        }
+
+        if (read < 2) {
+            continue;
         }
 
         if (data[0] != 0) {
