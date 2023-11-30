@@ -114,14 +114,14 @@ bool ControllerApp::OnInit()
 MainFrame::MainFrame(const wxString& title)
        : wxFrame(nullptr, wxID_ANY, title), m_usbThread(nullptr)
 {
-    m_current_template.button_actions[0].SetKeystroke(Keystroke(';', false, false, false));
-    //m_current_template.button_actions[1].SetKeystroke(Keystroke(VK_SPACE, false, false, false));
-    m_current_template.button_actions[2].SetKeystroke(Keystroke('\'', false, false, false));
-    m_current_template.button_actions[3].SetKeystroke(Keystroke(' ', false, false, false));
-    m_current_template.encoder_actions[0][ENCODER_CW].SetKeystroke(Keystroke(WXK_RIGHT, false, false, false));
-    m_current_template.encoder_actions[0][ENCODER_CW].SetModifiedKeystroke(1, Keystroke(WXK_RIGHT, false, false, true));
-    m_current_template.encoder_actions[0][ENCODER_CCW].SetKeystroke(Keystroke(WXK_LEFT, false, false, false));
-    m_current_template.encoder_actions[0][ENCODER_CCW].SetModifiedKeystroke(1, Keystroke(WXK_LEFT, false, false, true));
+    m_current_template.button_actions[0].SetKeystroke(Keystroke(';'));
+    //m_current_template.button_actions[1].SetKeystroke(Keystroke(WX_SPACE));
+    m_current_template.button_actions[2].SetKeystroke(Keystroke('\''));
+    m_current_template.button_actions[3].SetKeystroke(Keystroke(' '));
+    m_current_template.encoder_actions[0][ENCODER_CW].SetKeystroke(Keystroke(WXK_RIGHT));
+    m_current_template.encoder_actions[0][ENCODER_CW].SetModifiedKeystroke(1, Keystroke(WXK_RIGHT, Keystroke::Shift));
+    m_current_template.encoder_actions[0][ENCODER_CCW].SetKeystroke(Keystroke(WXK_LEFT));
+    m_current_template.encoder_actions[0][ENCODER_CCW].SetModifiedKeystroke(1, Keystroke(WXK_LEFT, Keystroke::Shift));
 
     m_actions.LoadTemplate(m_current_template);
     m_oldLogger = wxLog::GetActiveTarget();

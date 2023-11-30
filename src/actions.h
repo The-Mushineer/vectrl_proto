@@ -17,16 +17,19 @@ const size_t MAX_BUTTONS = 8;
 const size_t MAX_ENCODERS = 2;
 
 struct Keystroke {
+    enum KeyModifiers {
+        Control = 1,
+        Alt = 2,
+        Shift = 4,
+        Command = 8
+    };
     int key;
-    bool ctrl;
-    bool alt;
-    bool shift;
+    uint8_t modifiers;
 
-    Keystroke(int _key, bool _ctrl, bool _alt, bool _shift): key(_key), ctrl(_ctrl), alt(_alt), shift(_shift) {};
-    Keystroke(): key(0), ctrl(false), alt(false), shift(false) {};
+    Keystroke(int _key = 0, uint8_t _modifiers = 0): key(_key), modifiers(_modifiers) {};
 
     bool operator==(const Keystroke& other) const {
-        return key == other.key && ctrl == other.ctrl && alt == other.alt && shift == other.shift;
+        return key == other.key && modifiers == other.modifiers;
     }
     bool operator!=(const Keystroke& other) const {
         return !(*this == other);

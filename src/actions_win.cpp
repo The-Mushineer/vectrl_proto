@@ -11,19 +11,19 @@ void issueKeystroke(Keystroke keystroke, bool pressed) {
     DWORD dwFlags = pressed ? 0 : KEYEVENTF_KEYUP;
     bool isExtended = false;
     memset(input, 0, sizeof(input));
-    if (keystroke.ctrl) {
+    if (keystroke.modifiers & Keystroke::Control) {
         input[num_keys].type = INPUT_KEYBOARD;
         input[num_keys].ki.wVk = VK_CONTROL;
         input[num_keys].ki.dwFlags = dwFlags;
         num_keys++;
     }
-    if (keystroke.alt) {
+    if (keystroke.modifiers & Keystroke::Alt) {
         input[num_keys].type = INPUT_KEYBOARD;
         input[num_keys].ki.wVk = VK_MENU;
         input[num_keys].ki.dwFlags = dwFlags;
         num_keys++;
     }
-    if (keystroke.shift) {
+    if (keystroke.modifiers & Keystroke::Shift) {
         input[num_keys].type = INPUT_KEYBOARD;
         input[num_keys].ki.wVk = VK_SHIFT;
         input[num_keys].ki.dwFlags = dwFlags;
