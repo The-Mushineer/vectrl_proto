@@ -100,6 +100,7 @@ bool ControllerApp::OnInit()
 {
     if ( !wxApp::OnInit() )
         return false;
+    initializeActionsSupport();
 
     MainFrame *frame = new MainFrame("Video Editing Controller Prototype");
     frame->Show(true);

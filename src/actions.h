@@ -89,5 +89,6 @@ private:
 };
 
 void issueKeystroke(Keystroke keystroke, bool pressed);
+bool initializeActionsSupport();
 
 #endif

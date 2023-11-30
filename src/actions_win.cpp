@@ -5,6 +5,10 @@
 // Might be better to implement this ourselves, but this is easier for now.
 #include <wx/msw/private/keyboard.h>
 
+bool initializeActionsSupport() {
+    return true;
+}
+
 void issueKeystroke(Keystroke keystroke, bool pressed) {
     INPUT input[4];
     size_t num_keys = 0;
