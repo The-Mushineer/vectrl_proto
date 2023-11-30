@@ -1,11 +1,12 @@
 #include "usb.h"
 #include <hidapi.h>
 
-static class USBLib {
+class USBLib {
 public:
     USBLib() { hid_init(); };
     ~USBLib() { hid_exit(); };
-} usbLib();
+};
+static USBLib usbLib;
 
 //----------------------------------------------------------------------
 // USBManagerThread
@@ -60,6 +61,7 @@ void USBManagerThread::TerminateAll() {
     for (auto& device : devices) {
         device->Terminate(true);
     }
+    Sleep(20);
     devices.clear();
 }
 
