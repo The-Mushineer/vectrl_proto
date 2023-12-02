@@ -49,8 +49,8 @@ public:
 
     void SetKeystroke(Keystroke keystroke);
     void SetModifiedKeystroke(uint8_t modifier, Keystroke keystroke);
-    Keystroke GetKeystroke();
-    Keystroke GetModifiedKeystroke(uint8_t modifier);
+    Keystroke GetKeystroke() const;
+    Keystroke GetModifiedKeystroke(uint8_t modifier) const;
     Keystroke GetDesiredKeystroke(std::unordered_set<uint8_t> pressed_keys);
 private:
     Keystroke m_keystroke;

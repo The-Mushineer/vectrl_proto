@@ -16,11 +16,11 @@ void Action::SetModifiedKeystroke(uint8_t modifier, Keystroke keystroke) {
     m_modifier_keystrokes[modifier] = keystroke;
 }
 
-Keystroke Action::GetKeystroke() {
+Keystroke Action::GetKeystroke() const {
     return m_keystroke;
 }
 
-Keystroke Action::GetModifiedKeystroke(uint8_t modifier) {
+Keystroke Action::GetModifiedKeystroke(uint8_t modifier) const {
     auto it = m_modifier_keystrokes.find(modifier);
     if (it == m_modifier_keystrokes.end())
         return KEYSTROKE_NONE;

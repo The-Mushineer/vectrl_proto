@@ -10,6 +10,7 @@
 
 #include "usb.h"
 #include "actions.h"
+#include "config_loader.h"
 
 class ControllerApp : public wxApp
 {
@@ -50,6 +51,7 @@ private:
     USBManagerThread *m_usbThread;
     Actions m_actions;
     ActionsTemplate m_current_template;
+    ConfigLoader m_configLoader;
     wxDECLARE_EVENT_TABLE();
 };
 
@@ -94,6 +96,10 @@ wxIMPLEMENT_APP(ControllerApp);
 
 
 ControllerApp::ControllerApp() {
+    this->SetAppName("VECtrl");
+    this->SetAppDisplayName("Video Editing Controller Prototype");
+    this->SetVendorName("LeonOliver");
+    this->SetVendorDisplayName("Leon Oliver");
 }
 
 bool ControllerApp::OnInit()
@@ -115,14 +121,8 @@ bool ControllerApp::OnInit()
 MainFrame::MainFrame(const wxString& title)
        : wxFrame(nullptr, wxID_ANY, title), m_usbThread(nullptr)
 {
-    m_current_template.button_actions[0].SetKeystroke(Keystroke(';'));
-    //m_current_template.button_actions[1].SetKeystroke(Keystroke(WX_SPACE));
-    m_current_template.button_actions[2].SetKeystroke(Keystroke('\''));
-    m_current_template.button_actions[3].SetKeystroke(Keystroke(' '));
-    m_current_template.encoder_actions[0][ENCODER_CW].SetKeystroke(Keystroke(WXK_RIGHT));
-    m_current_template.encoder_actions[0][ENCODER_CW].SetModifiedKeystroke(1, Keystroke(WXK_RIGHT, Keystroke::Shift));
-    m_current_template.encoder_actions[0][ENCODER_CCW].SetKeystroke(Keystroke(WXK_LEFT));
-    m_current_template.encoder_actions[0][ENCODER_CCW].SetModifiedKeystroke(1, Keystroke(WXK_LEFT, Keystroke::Shift));
+    m_current_template = m_configLoader.LoadActiveTemplate();
+    m_configLoader.SaveActiveTemplate(m_current_template);
 
     m_actions.LoadTemplate(m_current_template);
     m_oldLogger = wxLog::GetActiveTarget();

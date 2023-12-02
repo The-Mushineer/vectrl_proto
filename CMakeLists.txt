@@ -33,6 +33,8 @@ set(SRC_FILES
     src/actions.h
     src/thread_utils.cpp
     src/thread_utils.h
+    src/config_loader.cpp
+    src/config_loader.h
     )
 
 set(SRC_FILES_WIN
