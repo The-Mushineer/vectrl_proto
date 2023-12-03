@@ -14,6 +14,12 @@ void issueKeystroke(Keystroke keystroke, bool pressed) {
     size_t num_keys = 0;
     DWORD dwFlags = pressed ? 0 : KEYEVENTF_KEYUP;
     bool isExtended = false;
+    WORD keyCode = 0;
+    if (keystroke.is_character) {
+        keyCode = VkKeyScanW(keystroke.key);
+    } else {
+        keyCode = wxMSWKeyboard::WXToVK(keystroke.key, &isExtended);
+    }
     memset(input, 0, sizeof(input));
     if (keystroke.modifiers & Keystroke::Control) {
         input[num_keys].type = INPUT_KEYBOARD;
@@ -34,7 +40,7 @@ void issueKeystroke(Keystroke keystroke, bool pressed) {
         num_keys++;
     }
     input[num_keys].type = INPUT_KEYBOARD;
-    input[num_keys].ki.wVk = wxMSWKeyboard::WXToVK(keystroke.key, &isExtended);
+    input[num_keys].ki.wVk = keyCode;
     input[num_keys].ki.dwFlags = dwFlags | (isExtended ? KEYEVENTF_EXTENDEDKEY : 0);
     num_keys++;
     if (!pressed) {

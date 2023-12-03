@@ -23,10 +23,12 @@ struct Keystroke {
         Shift = 4,
         Command = 8
     };
+    bool is_character;
     int key;
     uint8_t modifiers;
 
-    Keystroke(int _key = 0, uint8_t _modifiers = 0): key(_key), modifiers(_modifiers) {};
+    Keystroke(int _key = 0, uint8_t _modifiers = 0): key(_key), is_character(false), modifiers(_modifiers) {};
+    Keystroke(wchar_t _key, uint8_t _modifiers = 0): key(_key), is_character(true), modifiers(_modifiers) {};
 
     bool operator==(const Keystroke& other) const {
         return key == other.key && modifiers == other.modifiers;
@@ -51,6 +53,7 @@ public:
     void SetModifiedKeystroke(uint8_t modifier, Keystroke keystroke);
     Keystroke GetKeystroke() const;
     Keystroke GetModifiedKeystroke(uint8_t modifier) const;
+    const std::map<uint8_t, Keystroke>& GetModifiedKeystrokes() const;
     Keystroke GetDesiredKeystroke(std::unordered_set<uint8_t> pressed_keys);
 private:
     Keystroke m_keystroke;

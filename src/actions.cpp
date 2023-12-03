@@ -27,6 +27,10 @@ Keystroke Action::GetModifiedKeystroke(uint8_t modifier) const {
     return it->second;
 }
 
+const std::map<uint8_t, Keystroke>& Action::GetModifiedKeystrokes() const {
+    return m_modifier_keystrokes;
+}
+
 Keystroke Action::GetDesiredKeystroke(std::unordered_set<uint8_t> pressed_keys) {
     for (auto pressed_key : pressed_keys) {
         auto it = m_modifier_keystrokes.find(pressed_key);

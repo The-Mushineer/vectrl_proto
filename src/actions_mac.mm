@@ -33,11 +33,10 @@ CFStringRef createStringForKey(const UCKeyboardLayout *keyboardLayout, CGKeyCode
 
 /* Returns key code for given character via the above function, or UINT16_MAX
  * on error. */
-CGKeyCode keyCodeForChar(const char c)
+CGKeyCode keyCodeForChar(UniChar character)
 {
     //static CFMutableDictionaryRef charToCodeDict = NULL;
     uintptr_t code;
-    UniChar character = c;
     CFStringRef charStr = NULL;
 
     if (charToCodeDict == NULL) {
@@ -138,10 +137,9 @@ bool initializeActionsSupport() {
 void issueKeystroke(Keystroke keystroke, bool pressed) {
     bool isTrusted = AXIsProcessTrusted();
     CGKeyCode keyCode = UINT16_MAX;
-    if (keystroke.key < WXK_DELETE) {
+    if (keystroke.is_character) {
         // Printable key, use keyCodeForChar to convert to macOS keycode.
-        char character = (unichar)keystroke.key;
-        keyCode = keyCodeForChar(character);
+        keyCode = keyCodeForChar((unichar)keystroke.key);
     } else {
         // Non-printable key, use wxCharCodeWXToOSX to convert to macOS keycode.
         keyCode = (CGKeyCode) wxCharCodeWXToOSX((wxKeyCode) keystroke.key);
