@@ -3,9 +3,6 @@
 //----------------------------------------------------------------------
 // Action
 //----------------------------------------------------------------------
-
-Action::Action(): m_keystroke(KEYSTROKE_NONE) {}
-
 void Action::SetKeystroke(Keystroke keystroke) {
     m_keystroke = keystroke;
 }
@@ -16,11 +13,11 @@ void Action::SetModifiedKeystroke(uint8_t modifier, Keystroke keystroke) {
     m_modifier_keystrokes[modifier] = keystroke;
 }
 
-Keystroke Action::GetKeystroke() const {
+const Keystroke& Action::GetKeystroke() const {
     return m_keystroke;
 }
 
-Keystroke Action::GetModifiedKeystroke(uint8_t modifier) const {
+const Keystroke& Action::GetModifiedKeystroke(uint8_t modifier) const {
     auto it = m_modifier_keystrokes.find(modifier);
     if (it == m_modifier_keystrokes.end())
         return KEYSTROKE_NONE;
@@ -31,7 +28,7 @@ const std::map<uint8_t, Keystroke>& Action::GetModifiedKeystrokes() const {
     return m_modifier_keystrokes;
 }
 
-Keystroke Action::GetDesiredKeystroke(std::unordered_set<uint8_t> pressed_keys) {
+const Keystroke& Action::GetDesiredKeystroke(std::unordered_set<uint8_t> pressed_keys) const {
     for (auto pressed_key : pressed_keys) {
         auto it = m_modifier_keystrokes.find(pressed_key);
             if (it != m_modifier_keystrokes.end()) {

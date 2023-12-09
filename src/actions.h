@@ -27,8 +27,8 @@ struct Keystroke {
     int key;
     uint8_t modifiers;
 
-    Keystroke(int _key = 0, uint8_t _modifiers = 0): key(_key), is_character(false), modifiers(_modifiers) {};
-    Keystroke(wchar_t _key, uint8_t _modifiers = 0): key(_key), is_character(true), modifiers(_modifiers) {};
+    constexpr Keystroke(int _key = 0, uint8_t _modifiers = 0): key(_key), is_character(false), modifiers(_modifiers) {};
+    constexpr Keystroke(wchar_t _key, uint8_t _modifiers = 0): key(_key), is_character(true), modifiers(_modifiers) {};
 
     bool operator==(const Keystroke& other) const {
         return key == other.key && modifiers == other.modifiers;
@@ -47,14 +47,17 @@ enum EncoderDirection {
 
 class Action {
 public:
-    Action();
+    Action(): m_keystroke(KEYSTROKE_NONE) {};
+    Action(const Keystroke& keystroke): m_keystroke(keystroke) {};
+    Action(const Keystroke& keystroke, const std::map<uint8_t, Keystroke>& modifier_keystrokes):
+        m_keystroke(keystroke), m_modifier_keystrokes(modifier_keystrokes) {};
 
     void SetKeystroke(Keystroke keystroke);
     void SetModifiedKeystroke(uint8_t modifier, Keystroke keystroke);
-    Keystroke GetKeystroke() const;
-    Keystroke GetModifiedKeystroke(uint8_t modifier) const;
+    const Keystroke& GetKeystroke() const;
+    const Keystroke& GetModifiedKeystroke(uint8_t modifier) const;
     const std::map<uint8_t, Keystroke>& GetModifiedKeystrokes() const;
-    Keystroke GetDesiredKeystroke(std::unordered_set<uint8_t> pressed_keys);
+    const Keystroke&  GetDesiredKeystroke(std::unordered_set<uint8_t> pressed_keys) const;
 private:
     Keystroke m_keystroke;
     std::map<uint8_t, Keystroke> m_modifier_keystrokes;

@@ -1,34 +1,21 @@
 #include "config_loader.h"
 
-// Here we arbitrarily use  0x80000000 to indicate that the key is a character
-#define CHAR_DEFAULT(c) ((long)((c) | 0x80000000))
-#define IS_CHAR_DEFAULT(c) ((c) & 0x80000000)
-
-static const long DEFAULT_BUTTON_ACTIONS[MAX_BUTTONS][3] = {
-    {CHAR_DEFAULT(';'), 0, 0},
-    {WXK_NONE, 0, 0},
-    {CHAR_DEFAULT('\''), 0, 0},
-    {CHAR_DEFAULT(' '), 0, 0},
-    {WXK_NONE, 0, 0},
-    {WXK_NONE, 0, 0},
-    {WXK_NONE, 0, 0},
-    {WXK_NONE, 0, 0},
+static const Action DEFAULT_BUTTON_ACTIONS[MAX_BUTTONS] = {
+    Action(Keystroke(';')),
+    Action(Keystroke(WXK_NONE)),
+    Action(Keystroke('\'')),
+    Action(Keystroke(' ')),
+    Action(Keystroke(WXK_NONE)),
+    Action(Keystroke(WXK_NONE)),
 };
 
-static const long DEFAULT_ENCODER_ACTIONS[MAX_ENCODERS][2][6] = {
-    {{WXK_RIGHT, 0, 1, 1, WXK_RIGHT, Keystroke::Shift}, {WXK_LEFT, 0, 1, 1, WXK_LEFT, Keystroke::Shift}},
-    {{WXK_NONE, 0, 0, 0, 0, 0}, {WXK_NONE, 0, 0, 0, 0, 0}},
+static const Action DEFAULT_ENCODER_ACTIONS[MAX_ENCODERS][2] = {
+    {
+        Action(Keystroke(WXK_RIGHT), {{ 1, Keystroke(WXK_RIGHT, Keystroke::Shift) }}), 
+        Action(Keystroke(WXK_LEFT), {{ 1, Keystroke(WXK_LEFT, Keystroke::Shift) }}),
+    },
+    {Action(Keystroke(WXK_NONE)), Action(Keystroke(WXK_NONE))},
 };
-
-static wxString GetDefKeyValue(long defKeyLong) {
-    wxString defKey;
-    if (IS_CHAR_DEFAULT(defKeyLong)) {
-        defKey = wxString::Format("%c", defKeyLong & 0x7fffffff);
-    } else {
-        defKey = wxString::Format("0x%x", defKeyLong);
-    }
-    return defKey;
-}
 
 static wxString GetKeystrokeCode(const Keystroke& keystroke) {
     wxString keyCode;
@@ -56,26 +43,29 @@ ConfigLoader::ConfigLoader() {
 }
 
 
-Action ConfigLoader::LoadAction(const wxString& path, const long defaultValues[]) {
+Action ConfigLoader::LoadAction(const wxString& path, const Action& defaultValue) {
     Action action;
+    if(!m_config->Exists(path)) {
+        return defaultValue;
+    };
     m_config->SetPath(path);
     long flags, modCount;
     wxString key;
     size_t def_idx = 0;
-    m_config->Read("KeyCode", &key, GetDefKeyValue(defaultValues[def_idx++]));
-    m_config->Read("KeyFlags", &flags, defaultValues[def_idx++]);
+    m_config->Read("KeyCode", &key, L"0x0");
+    m_config->Read("KeyFlags", &flags, 0);
     if (key.starts_with("0x")) {
         action.SetKeystroke(Keystroke(GetLongFromHex(key), flags));
     } else {
         wchar_t keyChar = key.length() > 0 ? key[0] : '\0';
         action.SetKeystroke(Keystroke(keyChar, flags));
     }
-    m_config->Read("ModifierCount", &modCount, defaultValues[def_idx++]);
+    m_config->Read("ModifierCount", &modCount, 0);
     for (int i = 0; i < modCount; i++) {
         long modifier;
-        m_config->Read(wxString::Format("Modifier%d", i), &modifier, defaultValues[def_idx++]);
-        m_config->Read(wxString::Format("Modifier%dKeyCode", i), &key, GetDefKeyValue(defaultValues[def_idx++]));
-        m_config->Read(wxString::Format("Modifier%dKeyFlags", i), &flags, defaultValues[def_idx++]);
+        m_config->Read(wxString::Format("Modifier%d", i), &modifier, 0);
+        m_config->Read(wxString::Format("Modifier%dKeyCode", i), &key, L"0x0");
+        m_config->Read(wxString::Format("Modifier%dKeyFlags", i), &flags, 0);
         if (key.starts_with("0x")) {
             action.SetModifiedKeystroke(modifier, Keystroke(GetLongFromHex(key), flags));
         } else {
@@ -94,7 +84,7 @@ void ConfigLoader::SaveAction(const wxString& path, const Action& value) {
     m_config->Write("KeyFlags", keystroke.modifiers);
     m_config->Write("ModifierCount", modifiedKeystrokes.size());
     int i = 0;
-    for (auto item : modifiedKeystrokes) {
+    for (const auto& item : modifiedKeystrokes) {
         m_config->Write(wxString::Format("Modifier%d", i), item.first);
         m_config->Write(wxString::Format("Modifier%dKeyCode", i), GetKeystrokeCode(item.second));
         m_config->Write(wxString::Format("Modifier%dKeyFlags", i), item.second.modifiers);
