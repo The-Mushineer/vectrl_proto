@@ -9,8 +9,8 @@ void Action::SetKeystroke(Keystroke keystroke) {
 
 void Action::SetModifiedKeystroke(uint8_t modifier, Keystroke keystroke) {
     if (keystroke == KEYSTROKE_NONE)
-        m_modifier_keystrokes.erase(modifier);
-    m_modifier_keystrokes[modifier] = keystroke;
+        m_modifierKeystrokes.erase(modifier);
+    m_modifierKeystrokes[modifier] = keystroke;
 }
 
 const Keystroke& Action::GetKeystroke() const {
@@ -18,22 +18,23 @@ const Keystroke& Action::GetKeystroke() const {
 }
 
 const Keystroke& Action::GetModifiedKeystroke(uint8_t modifier) const {
-    auto it = m_modifier_keystrokes.find(modifier);
-    if (it == m_modifier_keystrokes.end())
+    auto it = m_modifierKeystrokes.find(modifier);
+    if (it == m_modifierKeystrokes.end())
         return KEYSTROKE_NONE;
     return it->second;
 }
 
 const std::map<uint8_t, Keystroke>& Action::GetModifiedKeystrokes() const {
-    return m_modifier_keystrokes;
+    return m_modifierKeystrokes;
 }
 
-const Keystroke& Action::GetDesiredKeystroke(std::unordered_set<uint8_t> pressed_keys) const {
-    for (auto pressed_key : pressed_keys) {
-        auto it = m_modifier_keystrokes.find(pressed_key);
-            if (it != m_modifier_keystrokes.end()) {
-                return it->second;
-            }
+const Keystroke& Action::GetDesiredKeystroke(
+    std::unordered_set<uint8_t> pressedKeys) const {
+    for (auto pressedKey : pressedKeys) {
+        auto it = m_modifierKeystrokes.find(pressedKey);
+        if (it != m_modifierKeystrokes.end()) {
+            return it->second;
+        }
     }
 
     return m_keystroke;
@@ -43,26 +44,29 @@ const Keystroke& Action::GetDesiredKeystroke(std::unordered_set<uint8_t> pressed
 // Actions
 //----------------------------------------------------------------------
 
-Actions::Actions(): m_button_actions(), m_encoder_actions(), m_pressed_buttons() {}
-
- Keystroke Actions::GetButtonKeystroke(uint8_t button) {
-    wxCriticalSectionLocker locker(m_actions_critsect);
-    return m_button_actions[button].GetDesiredKeystroke(m_pressed_buttons);
+Actions::Actions() : m_buttonActions(), m_encoderActions(), m_pressedButtons() {
 }
 
-Keystroke Actions::GetEncoderKeystroke(uint8_t encoder, EncoderDirection direction) {
-    wxCriticalSectionLocker locker(m_actions_critsect);
-    return m_encoder_actions[encoder][direction].GetDesiredKeystroke(m_pressed_buttons);
+Keystroke Actions::GetButtonKeystroke(uint8_t button) {
+    wxCriticalSectionLocker locker(m_actionsCriticalSection);
+    return m_buttonActions[button].GetDesiredKeystroke(m_pressedButtons);
+}
+
+Keystroke Actions::GetEncoderKeystroke(uint8_t encoder,
+                                       EncoderDirection direction) {
+    wxCriticalSectionLocker locker(m_actionsCriticalSection);
+    return m_encoderActions[encoder][direction].GetDesiredKeystroke(
+        m_pressedButtons);
 }
 
 void Actions::IssueButton(uint8_t button, bool pressed) {
     auto keystroke = GetButtonKeystroke(button);
     {
-        wxCriticalSectionLocker locker(m_pressed_critsect);
+        wxCriticalSectionLocker locker(m_pressedCriticalSection);
         if (pressed) {
-            m_pressed_buttons.insert(button);
+            m_pressedButtons.insert(button);
         } else {
-            m_pressed_buttons.erase(button);
+            m_pressedButtons.erase(button);
         }
     }
     if (keystroke != KEYSTROKE_NONE) {
@@ -70,18 +74,19 @@ void Actions::IssueButton(uint8_t button, bool pressed) {
     }
 }
 
-void Actions::LoadTemplate(const ActionsTemplate& actions_template) {
-    wxCriticalSectionLocker locker(m_actions_critsect);
-    m_button_actions = actions_template.button_actions;
-    m_encoder_actions = actions_template.encoder_actions;
+void Actions::LoadTemplate(const ActionsTemplate& actionsTemplate) {
+    wxCriticalSectionLocker locker(m_actionsCriticalSection);
+    m_buttonActions = actionsTemplate.buttonActions;
+    m_encoderActions = actionsTemplate.encoderActions;
 }
 
 void Actions::IssueEncoder(uint8_t encoder, int8_t count) {
     auto direction = count > 0 ? ENCODER_CW : ENCODER_CCW;
-    auto abs_count = count > 0 ? count : -count;
-    auto keystroke = GetEncoderKeystroke(encoder, count > 0 ? ENCODER_CW : ENCODER_CCW);
+    auto absCount = count > 0 ? count : -count;
+    auto keystroke =
+        GetEncoderKeystroke(encoder, count > 0 ? ENCODER_CW : ENCODER_CCW);
     if (keystroke != KEYSTROKE_NONE) {
-        for (int i = 0; i < abs_count; i++) {
+        for (int i = 0; i < absCount; i++) {
             issueKeystroke(keystroke, true);
             issueKeystroke(keystroke, false);
         }

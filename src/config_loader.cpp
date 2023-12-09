@@ -1,25 +1,24 @@
 #include "config_loader.h"
 
 static const Action DEFAULT_BUTTON_ACTIONS[MAX_BUTTONS] = {
-    Action(Keystroke(';')),
-    Action(Keystroke(WXK_NONE)),
-    Action(Keystroke('\'')),
-    Action(Keystroke(' ')),
-    Action(Keystroke(WXK_NONE)),
-    Action(Keystroke(WXK_NONE)),
+    Action(Keystroke(';')),      Action(Keystroke(WXK_NONE)),
+    Action(Keystroke('\'')),     Action(Keystroke(' ')),
+    Action(Keystroke(WXK_NONE)), Action(Keystroke(WXK_NONE)),
 };
 
 static const Action DEFAULT_ENCODER_ACTIONS[MAX_ENCODERS][2] = {
     {
-        Action(Keystroke(WXK_RIGHT), {{ 1, Keystroke(WXK_RIGHT, Keystroke::Shift) }}), 
-        Action(Keystroke(WXK_LEFT), {{ 1, Keystroke(WXK_LEFT, Keystroke::Shift) }}),
+        Action(Keystroke(WXK_RIGHT),
+               {{1, Keystroke(WXK_RIGHT, Keystroke::Shift)}}),
+        Action(Keystroke(WXK_LEFT),
+               {{1, Keystroke(WXK_LEFT, Keystroke::Shift)}}),
     },
     {Action(Keystroke(WXK_NONE)), Action(Keystroke(WXK_NONE))},
 };
 
 static wxString GetKeystrokeCode(const Keystroke& keystroke) {
     wxString keyCode;
-    if (keystroke.is_character) {
+    if (keystroke.isCharacter) {
         keyCode = wxString::Format("%c", keystroke.key);
     } else {
         keyCode = wxString::Format("0x%x", keystroke.key);
@@ -42,16 +41,15 @@ ConfigLoader::ConfigLoader() {
     m_config = wxConfigBase::Create();
 }
 
-
-Action ConfigLoader::LoadAction(const wxString& path, const Action& defaultValue) {
+Action ConfigLoader::LoadAction(const wxString& path,
+                                const Action& defaultValue) {
     Action action;
-    if(!m_config->Exists(path)) {
+    if (!m_config->Exists(path)) {
         return defaultValue;
     };
     m_config->SetPath(path);
     long flags, modCount;
     wxString key;
-    size_t def_idx = 0;
     m_config->Read("KeyCode", &key, L"0x0");
     m_config->Read("KeyFlags", &flags, 0);
     if (key.starts_with("0x")) {
@@ -67,7 +65,8 @@ Action ConfigLoader::LoadAction(const wxString& path, const Action& defaultValue
         m_config->Read(wxString::Format("Modifier%dKeyCode", i), &key, L"0x0");
         m_config->Read(wxString::Format("Modifier%dKeyFlags", i), &flags, 0);
         if (key.starts_with("0x")) {
-            action.SetModifiedKeystroke(modifier, Keystroke(GetLongFromHex(key), flags));
+            action.SetModifiedKeystroke(modifier,
+                                        Keystroke(GetLongFromHex(key), flags));
         } else {
             wchar_t keyChar = key[0];
             action.SetModifiedKeystroke(modifier, Keystroke(keyChar, flags));
@@ -86,8 +85,10 @@ void ConfigLoader::SaveAction(const wxString& path, const Action& value) {
     int i = 0;
     for (const auto& item : modifiedKeystrokes) {
         m_config->Write(wxString::Format("Modifier%d", i), item.first);
-        m_config->Write(wxString::Format("Modifier%dKeyCode", i), GetKeystrokeCode(item.second));
-        m_config->Write(wxString::Format("Modifier%dKeyFlags", i), item.second.modifiers);
+        m_config->Write(wxString::Format("Modifier%dKeyCode", i),
+                        GetKeystrokeCode(item.second));
+        m_config->Write(wxString::Format("Modifier%dKeyFlags", i),
+                        item.second.modifiers);
         i++;
     }
 }
@@ -97,28 +98,35 @@ ActionsTemplate ConfigLoader::LoadActiveTemplate() {
     wxString strOldPath = m_config->GetPath();
 
     for (int i = 0; i < MAX_BUTTONS; i++) {
-        template_.button_actions[i] = LoadAction(wxString::Format("/Active/Button%d", i), DEFAULT_BUTTON_ACTIONS[i]);
+        template_.buttonActions[i] = LoadAction(
+            wxString::Format("/Active/Button%d", i), DEFAULT_BUTTON_ACTIONS[i]);
     }
 
     for (int i = 0; i < MAX_ENCODERS; i++) {
-        template_.encoder_actions[i][ENCODER_CW] = LoadAction(wxString::Format("/Active/Encoder%d/CW", i), DEFAULT_ENCODER_ACTIONS[i][ENCODER_CW]);
-        template_.encoder_actions[i][ENCODER_CCW] = LoadAction(wxString::Format("/Active/Encoder%d/CCW", i), DEFAULT_ENCODER_ACTIONS[i][ENCODER_CCW]);
+        template_.encoderActions[i][ENCODER_CW] =
+            LoadAction(wxString::Format("/Active/Encoder%d/CW", i),
+                       DEFAULT_ENCODER_ACTIONS[i][ENCODER_CW]);
+        template_.encoderActions[i][ENCODER_CCW] =
+            LoadAction(wxString::Format("/Active/Encoder%d/CCW", i),
+                       DEFAULT_ENCODER_ACTIONS[i][ENCODER_CCW]);
     }
     m_config->SetPath(strOldPath);
     return template_;
 }
 
-
 void ConfigLoader::SaveActiveTemplate(const ActionsTemplate& template_) {
     wxString strOldPath = m_config->GetPath();
 
     for (int i = 0; i < MAX_BUTTONS; i++) {
-        SaveAction(wxString::Format("/Active/Button%d", i), template_.button_actions[i]);
+        SaveAction(wxString::Format("/Active/Button%d", i),
+                   template_.buttonActions[i]);
     }
 
     for (int i = 0; i < MAX_ENCODERS; i++) {
-        SaveAction(wxString::Format("/Active/Encoder%d/CW", i), template_.encoder_actions[i][ENCODER_CW]);
-        SaveAction(wxString::Format("/Active/Encoder%d/CCW", i), template_.encoder_actions[i][ENCODER_CCW]);
+        SaveAction(wxString::Format("/Active/Encoder%d/CW", i),
+                   template_.encoderActions[i][ENCODER_CW]);
+        SaveAction(wxString::Format("/Active/Encoder%d/CCW", i),
+                   template_.encoderActions[i][ENCODER_CCW]);
     }
     m_config->SetPath(strOldPath);
 }

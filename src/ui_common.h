@@ -4,7 +4,7 @@
 #include "wx/wxprec.h"
 
 #ifndef WX_PRECOMP
-    #include "wx/defs.h"
+#include "wx/defs.h"
 #endif
 
 // ----------------------------------------------------------------------------
@@ -12,8 +12,7 @@
 // ----------------------------------------------------------------------------
 
 // IDs for the controls and the menu commands
-enum
-{
+enum {
     // Menu items
     App_Quit = wxID_EXIT,
     App_About = wxID_ABOUT,

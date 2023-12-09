@@ -4,12 +4,12 @@
 #include "wx/wxprec.h"
 
 #ifndef WX_PRECOMP
-    #include "wx/thread.h"
+#include "wx/thread.h"
 #endif
 
 #if !wxUSE_THREADS
-    #error "This program requires thread support!"
-#endif // wxUSE_THREADS
+#error "This program requires thread support!"
+#endif  // wxUSE_THREADS
 
 class BooleanCondition {
 public:
@@ -22,8 +22,13 @@ public:
     int Wait();
     int WaitTimeout(int timeout);
 
-    operator bool() { return Get(); }
-    bool operator!() { return !Get(); }
+    operator bool() {
+        return Get();
+    }
+    bool operator!() {
+        return !Get();
+    }
+
 private:
     wxMutex m_mutex;
     wxCondition m_condition;

@@ -1,21 +1,21 @@
 #include "wx/wxprec.h"
 
 #ifndef WX_PRECOMP
-    #include "wx/wx.h"
+#include "wx/wx.h"
 #endif
 
 #if !wxUSE_THREADS
-    #error "This sample requires thread support!"
-#endif // wxUSE_THREADS
+#error "This sample requires thread support!"
+#endif  // wxUSE_THREADS
 
-#include "main_frame.h"
 #include "actions.h"
+#include "main_frame.h"
 
-class ControllerApp : public wxApp
-{
+class ControllerApp : public wxApp {
 public:
     ControllerApp();
-    virtual ~ControllerApp(){}
+    virtual ~ControllerApp() {
+    }
 
     virtual bool OnInit() override;
 };
@@ -30,7 +30,6 @@ wxIMPLEMENT_APP(ControllerApp);
 // ControllerApp
 // ----------------------------------------------------------------------------
 
-
 ControllerApp::ControllerApp() {
     this->SetAppName("VECtrl");
     this->SetAppDisplayName("Video Editing Controller Prototype");
@@ -38,9 +37,8 @@ ControllerApp::ControllerApp() {
     this->SetVendorDisplayName("Leon Oliver");
 }
 
-bool ControllerApp::OnInit()
-{
-    if ( !wxApp::OnInit() )
+bool ControllerApp::OnInit() {
+    if (!wxApp::OnInit())
         return false;
     initializeActionsSupport();
 
@@ -49,4 +47,3 @@ bool ControllerApp::OnInit()
 
     return true;
 }
-

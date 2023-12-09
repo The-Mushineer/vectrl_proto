@@ -137,7 +137,7 @@ bool initializeActionsSupport() {
 void issueKeystroke(Keystroke keystroke, bool pressed) {
     bool isTrusted = AXIsProcessTrusted();
     CGKeyCode keyCode = UINT16_MAX;
-    if (keystroke.is_character) {
+    if (keystroke.isCharacter) {
         // Printable key, use keyCodeForChar to convert to macOS keycode.
         keyCode = keyCodeForChar((unichar)keystroke.key);
     } else {

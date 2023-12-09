@@ -4,7 +4,7 @@
 #include "wx/wxprec.h"
 
 #ifndef WX_PRECOMP
-    #include "wx/config.h"
+#include "wx/config.h"
 #endif
 
 #include "actions.h"
@@ -15,6 +15,7 @@ public:
 
     ActionsTemplate LoadActiveTemplate();
     void SaveActiveTemplate(const ActionsTemplate& template_);
+
 private:
     wxConfigBase* m_config;
     Action LoadAction(const wxString& path, const Action& defaultValue);
