@@ -7,10 +7,10 @@
 #include "wx/wx.h"
 #endif
 
-#include "actions.h"
-#include "config_loader.h"
+#include "../common/actions.h"
+#include "../config/config_loader.h"
+#include "../device/usb.h"
 #include "ui_common.h"
-#include "usb.h"
 
 class MainFrame : public wxFrame, public wxLog {
 public:

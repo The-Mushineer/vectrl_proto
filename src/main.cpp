@@ -8,8 +8,8 @@
 #error "This sample requires thread support!"
 #endif  // wxUSE_THREADS
 
-#include "actions.h"
-#include "main_frame.h"
+#include "common/actions.h"
+#include "ui/main_frame.h"
 
 class ControllerApp : public wxApp {
 public:

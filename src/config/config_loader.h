@@ -7,7 +7,7 @@
 #include "wx/config.h"
 #endif
 
-#include "actions.h"
+#include "../common/actions.h"
 
 class ConfigLoader {
 public:

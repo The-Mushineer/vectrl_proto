@@ -27,27 +27,27 @@ add_subdirectory(libs/hidapi)
 
 set(SRC_FILES
     src/main.cpp
-    src/ui_common.h
-    src/main_frame.cpp
-    src/main_frame.h
-    src/usb.cpp
-    src/usb.h
-    src/actions.cpp
-    src/actions.h
-    src/thread_utils.cpp
-    src/thread_utils.h
-    src/config_loader.cpp
-    src/config_loader.h
+    src/ui/ui_common.h
+    src/ui/main_frame.cpp
+    src/ui/main_frame.h
+    src/device/usb.cpp
+    src/device/usb.h
+    src/common/actions.cpp
+    src/common/actions.h
+    src/common/thread_utils.cpp
+    src/common/thread_utils.h
+    src/config/config_loader.cpp
+    src/config/config_loader.h
     )
 
 set(SRC_FILES_WIN
-    src/actions_win.cpp
+    src/common/actions_win.cpp
     )
 
 set(SRC_FILES_LINUX)
 
 set(SRC_FILES_MACOSX
-    src/actions_mac.mm
+    src/common/actions_mac.mm
     )
 
 if(WIN32)

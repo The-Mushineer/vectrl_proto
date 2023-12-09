@@ -15,8 +15,8 @@
 #include <atomic>
 #include <vector>
 
-#include "actions.h"
-#include "thread_utils.h"
+#include "../common/actions.h"
+#include "../common/thread_utils.h"
 
 class USBManagerThread;
 class USBDeviceThread;
