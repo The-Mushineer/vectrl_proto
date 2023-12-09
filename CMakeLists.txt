@@ -27,6 +27,9 @@ add_subdirectory(libs/hidapi)
 
 set(SRC_FILES
     src/main.cpp
+    src/ui_common.h
+    src/main_frame.cpp
+    src/main_frame.h
     src/usb.cpp
     src/usb.h
     src/actions.cpp
