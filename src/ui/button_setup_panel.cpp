@@ -21,6 +21,8 @@ wxDEFINE_EVENT(EVT_SET_ACTION, SetActionEvent);
 // ----------------------------------------------------------------------------
 wxString GetKeyName(int key, bool isCharacter) {
     switch (key) {
+        case WXK_NONE:
+            return wxT("");
         case WXK_BACK:
 #ifdef __WXOSX__
             return wxT("Delete (backspace)");
@@ -352,6 +354,24 @@ wxString GetKeyName(int key, bool isCharacter) {
     return wxString::Format("Unknown (%d)", key);
 }
 
+wxString GetKeystrokeText(const Keystroke& keystroke) {
+    wxString keystrokeString;
+    if (keystroke.modifiers & Keystroke::Control) {
+        keystrokeString += s_controlLabel;
+    }
+    if (keystroke.modifiers & Keystroke::Alt) {
+        keystrokeString += s_altLabel;
+    }
+    if (keystroke.modifiers & Keystroke::Shift) {
+        keystrokeString += s_shiftLabel;
+    }
+    if (keystroke.modifiers & Keystroke::Command) {
+        keystrokeString += s_commandLabel;
+    }
+    keystrokeString += GetKeyName(keystroke.key, keystroke.isCharacter);
+    return keystrokeString;
+}
+
 // ----------------------------------------------------------------------------
 // ButtonActionLine
 // ----------------------------------------------------------------------------
@@ -371,7 +391,12 @@ ButtonActionLine::ButtonActionLine(wxWindow* parent, wxWindowID winid,
         new wxStaticText(this, wxID_ANY, wxT("(none)"), wxDefaultPosition,
                          wxDefaultSize, wxALIGN_CENTRE_HORIZONTAL);
     m_keystrokeDisplayControl->GetAlignment();
-    // m_keystrokeDisplayControl->SetSizeHints(wxSize(100, -1));
+    m_keystrokeDisplayControl->SetSizeHints(wxSize(60, -1));
+    m_keystrokeEditControl = new wxTextCtrl(
+        this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize,
+        wxTE_PROCESS_ENTER | wxTE_PROCESS_TAB | wxTE_READONLY | wxTE_CENTRE);
+    m_keystrokeEditControl->Hide();
+    m_keystrokeEditControl->SetSizeHints(wxSize(60, -1));
     m_btnEdit =
         new wxBitmapButton(this, wxID_ANY, wxNullBitmap, wxDefaultPosition,
                            wxDefaultSize, wxBU_AUTODRAW | 0);
@@ -385,6 +410,8 @@ ButtonActionLine::ButtonActionLine(wxWindow* parent, wxWindowID winid,
     sizer->Add(m_labelControl, wxSizerFlags(3).Center().Border(wxALL, 4));
     sizer->Add(m_keystrokeDisplayControl,
                wxSizerFlags(1).Center().Border(wxALL, 4));
+    sizer->Add(m_keystrokeEditControl,
+               wxSizerFlags(1).Center().Border(wxLEFT | wxRIGHT, 4));
     sizer->Add(m_btnEdit, wxSizerFlags().Center().Border(wxALL, 4));
     sizer->Add(m_btnClear, wxSizerFlags().Center().Border(wxALL, 4));
     SetSizer(sizer);
@@ -397,6 +424,12 @@ ButtonActionLine::ButtonActionLine(wxWindow* parent, wxWindowID winid,
     Bind(wxEVT_IDLE, &ButtonActionLine::OnIdle, this);
     m_btnClear->Bind(wxEVT_BUTTON, &ButtonActionLine::OnBtnClear, this);
     m_btnEdit->Bind(wxEVT_BUTTON, &ButtonActionLine::OnBtnEdit, this);
+    m_keystrokeEditControl->Bind(wxEVT_KILL_FOCUS,
+                                 &ButtonActionLine::OnKeystrokeKillFocus, this);
+    m_keystrokeEditControl->Bind(wxEVT_KEY_DOWN,
+                                 &ButtonActionLine::OnKeystrokeKeyDown, this);
+    m_keystrokeEditControl->Bind(wxEVT_KEY_UP,
+                                 &ButtonActionLine::OnKeystrokeKeyDown, this);
 }
 
 void ButtonActionLine::SetLabel(const wxString& label) {
@@ -409,24 +442,25 @@ void ButtonActionLine::SetOwnModifierNumber(int number) {
 
 void ButtonActionLine::SetKeystroke(const Keystroke& keystroke) {
     m_keystroke = keystroke;
-    if (keystroke == KEYSTROKE_NONE) {
+    if (keystroke.key == 0) {
         m_keystrokeDisplayControl->SetLabel(wxT("(none)"));
     } else {
-        wxString keystrokeString;
-        if (keystroke.modifiers & Keystroke::Control) {
-            keystrokeString += s_controlLabel;
-        }
-        if (keystroke.modifiers & Keystroke::Alt) {
-            keystrokeString += s_altLabel;
-        }
-        if (keystroke.modifiers & Keystroke::Shift) {
-            keystrokeString += s_shiftLabel;
-        }
-        if (keystroke.modifiers & Keystroke::Command) {
-            keystrokeString += s_commandLabel;
-        }
-        keystrokeString += GetKeyName(keystroke.key, keystroke.isCharacter);
+        wxString keystrokeString = GetKeystrokeText(keystroke);
         m_keystrokeDisplayControl->SetLabel(keystrokeString);
+    }
+    Layout();
+}
+
+void ButtonActionLine::SetEditing(bool editing) {
+    if (editing) {
+        m_keystrokeDisplayControl->Hide();
+        m_keystrokeEditControl->Clear();
+        m_keystrokeEditControl->Show();
+        m_keystrokeEditControl->SetFocus();
+        m_keystrokeEditControl->SelectAll();
+    } else {
+        m_keystrokeDisplayControl->Show();
+        m_keystrokeEditControl->Hide();
     }
     Layout();
 }
@@ -461,6 +495,7 @@ void ButtonActionLine::OnIdle(wxIdleEvent& event) {
 }
 
 void ButtonActionLine::OnBtnEdit(wxCommandEvent& event) {
+    SetEditing(true);
 }
 
 void ButtonActionLine::OnBtnClear(wxCommandEvent& event) {
@@ -469,6 +504,61 @@ void ButtonActionLine::OnBtnClear(wxCommandEvent& event) {
     newEvent.SetKeystroke(m_keystroke);
     newEvent.SetModifierNumber(m_ownModifierNumber);
     AddPendingEvent(newEvent);
+}
+void ButtonActionLine::OnKeystrokeKillFocus(wxFocusEvent& event) {
+    SetEditing(false);
+}
+
+void ButtonActionLine::OnKeystrokeKeyDown(wxKeyEvent& event) {
+    Keystroke newKeystroke;
+    auto unicodeKey = event.GetUnicodeKey();
+    auto keyCode = event.GetKeyCode();
+    auto modifiers = event.GetModifiers();
+    if (modifiers & wxMOD_RAW_CONTROL) {
+        newKeystroke.modifiers |= Keystroke::Control;
+    }
+    if (modifiers & wxMOD_ALT) {
+        newKeystroke.modifiers |= Keystroke::Alt;
+    }
+    if (modifiers & wxMOD_SHIFT) {
+        newKeystroke.modifiers |= Keystroke::Shift;
+    }
+#if defined(__WXMAC__)
+    if (modifiers & wxMOD_CONTROL) {
+        newKeystroke.modifiers |= Keystroke::Command;
+    }
+#endif
+    if (event.GetEventType() == wxEVT_KEY_DOWN && (unicodeKey || keyCode)) {
+        if ((unicodeKey >= WXK_SPACE && keyCode != WXK_DELETE) ||
+            keyCode == 0) {
+            wxLogDebug(
+                "ButtonActionLine::OnKeystrokeKeyDown - 0x%x - '%c' - 0x%x",
+                unicodeKey, unicodeKey, modifiers);
+            newKeystroke.key = unicodeKey;
+            newKeystroke.isCharacter = true;
+        } else {
+            wxLogDebug("ButtonActionLine::OnKeystrokeKeyDown - 0x%x - 0x%x",
+                       keyCode, modifiers);
+            if (keyCode != WXK_ALT && keyCode != WXK_RAW_CONTROL &&
+                keyCode != WXK_SHIFT
+#if defined(__WXMAC__)
+                && keyCode != WXK_COMMAND
+#endif
+            ) {
+                newKeystroke.key = keyCode;
+                newKeystroke.isCharacter = false;
+            }
+        }
+    }
+    m_keystrokeEditControl->SetValue(GetKeystrokeText(newKeystroke));
+    if (newKeystroke.key != 0) {
+        SetKeystrokeEvent newEvent{EVT_SET_KEYSTROKE, GetId()};
+        SetKeystroke(newKeystroke);
+        newEvent.SetKeystroke(m_keystroke);
+        newEvent.SetModifierNumber(m_ownModifierNumber);
+        AddPendingEvent(newEvent);
+        SetEditing(false);
+    }
 }
 
 // ----------------------------------------------------------------------------

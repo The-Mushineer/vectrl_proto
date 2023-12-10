@@ -110,17 +110,23 @@ private:
     Keystroke m_keystroke;
     wxStaticText* m_labelControl;
     wxStaticText* m_keystrokeDisplayControl;
+    wxTextCtrl* m_keystrokeEditControl;
     wxBitmapButton* m_btnEdit;
     wxBitmapButton* m_btnClear;
     int m_ownModifierNumber;
     int m_mouseEnterCount;
     bool m_mouseInside;
+
+    void SetEditing(bool editing);
+
     void SetupHoverEvents(wxWindow* window);
     void OnMouseEnter(wxMouseEvent& event);
     void OnMouseLeave(wxMouseEvent& event);
     void OnIdle(wxIdleEvent& event);
     void OnBtnEdit(wxCommandEvent& event);
     void OnBtnClear(wxCommandEvent& event);
+    void OnKeystrokeKillFocus(wxFocusEvent& event);
+    void OnKeystrokeKeyDown(wxKeyEvent& event);
 };
 
 class ButtonActionPanel : public wxPanel {
