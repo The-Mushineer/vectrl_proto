@@ -38,6 +38,8 @@ set(SRC_FILES
     src/common/thread_utils.h
     src/config/config_loader.cpp
     src/config/config_loader.h
+    src/config/controller_description.cpp
+    src/config/controller_description.h
     )
 
 set(SRC_FILES_WIN
