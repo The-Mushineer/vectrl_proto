@@ -638,7 +638,7 @@ ButtonSetupPanel::ButtonSetupPanel(
                           wxScrolledWindowStyle | wxTAB_TRAVERSAL),
       m_deviceDescription(deviceDescription) {
     SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_FRAMEBK));
-    SetScrollRate(5, 5);
+    SetScrollRate(16, 16);
     // Computes the list of available modifiers by joining the list of
     // encoder buttons and regular buttons.
     auto allAvailableModifiers = m_deviceDescription.buttons;
