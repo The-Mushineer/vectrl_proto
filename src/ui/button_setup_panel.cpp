@@ -611,7 +611,7 @@ ButtonSetupPanel::EncoderControls ButtonSetupPanel::CreateEncoderActionPanel(
     encoderControls.cw = new ButtonActionPanel(
         this, wxID_ANY, wxT("Turn clockwise"), availableModifiers);
     encoderControls.ccw = new ButtonActionPanel(
-        this, wxID_ANY, wxT("Turn clockwise"), availableModifiers);
+        this, wxID_ANY, wxT("Turn counter-clockwise"), availableModifiers);
     // Computes the list of available modifiers for the encoder button
     auto remove_iterator =
         std::remove_if(availableModifiers.begin(), availableModifiers.end(),
