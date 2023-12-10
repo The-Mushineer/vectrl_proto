@@ -440,7 +440,6 @@ void ButtonActionLine::OnMouseLeave(wxMouseEvent& event) {
 void ButtonActionLine::OnIdle(wxIdleEvent& event) {
     bool newMouseInside = m_mouseEnterCount > 0;
     if (newMouseInside != m_mouseInside) {
-        wxLogDebug("Idle: %d", m_mouseEnterCount);
         m_mouseInside = newMouseInside;
         SetBackgroundColour(
             m_mouseInside
