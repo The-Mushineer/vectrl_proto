@@ -1,8 +1,8 @@
 #include "config_loader.h"
 
 static const Action DEFAULT_BUTTON_ACTIONS[MAX_BUTTONS] = {
-    Action(Keystroke(';')),      Action(Keystroke(WXK_NONE)),
-    Action(Keystroke('\'')),     Action(Keystroke(' ')),
+    Action(Keystroke(L';')),     Action(Keystroke(WXK_NONE)),
+    Action(Keystroke(L'\'')),    Action(Keystroke(L' ')),
     Action(Keystroke(WXK_NONE)), Action(Keystroke(WXK_NONE)),
 };
 
