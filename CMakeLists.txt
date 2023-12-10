@@ -30,6 +30,8 @@ set(SRC_FILES
     src/ui/ui_common.h
     src/ui/main_frame.cpp
     src/ui/main_frame.h
+    src/ui/button_setup_panel.cpp
+    src/ui/button_setup_panel.h
     src/device/usb.cpp
     src/device/usb.h
     src/common/actions.cpp

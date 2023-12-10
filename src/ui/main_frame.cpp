@@ -1,4 +1,5 @@
 #include "main_frame.h"
+#include "../config/controller_description.h"
 
 // ----------------------------------------------------------------------------
 // Event tables and other macros for wxWidgets
@@ -53,6 +54,13 @@ MainFrame::MainFrame(const wxString& title)
     CreateStatusBar(2);
     SetStatusText("Video Editing Controller");
 #endif  // wxUSE_STATUSBAR
+
+    // Create a panel to hold the button setup
+    m_buttonSetupPanel =
+        new ButtonSetupPanel(this, wxID_ANY, VECTRL_PROTO_DESCRIPTION);
+    m_buttonSetupPanel->SetActionsTemplate(m_currentTemplate);
+
+    // Creates the log text control
     wxTextCtrl* header = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition,
                                         wxDefaultSize, wxTE_READONLY);
     DoLogLine(header, "  Time", " Thread", "Message");
@@ -70,6 +78,7 @@ MainFrame::MainFrame(const wxString& title)
 
     // layout and show the frame
     wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
+    sizer->Add(m_buttonSetupPanel, wxSizerFlags(1).Expand());
     sizer->Add(header, wxSizerFlags().Expand());
     sizer->Add(m_textLogControl, wxSizerFlags().Expand());
     SetSizer(sizer);

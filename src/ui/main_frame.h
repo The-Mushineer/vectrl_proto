@@ -10,6 +10,7 @@
 #include "../common/actions.h"
 #include "../config/config_loader.h"
 #include "../device/usb.h"
+#include "button_setup_panel.h"
 #include "ui_common.h"
 
 class MainFrame : public wxFrame, public wxLog {
@@ -33,6 +34,7 @@ private:
 
 private:
     wxTextCtrl* m_textLogControl;
+    ButtonSetupPanel* m_buttonSetupPanel;
     wxLog* m_oldLogger;
     wxCriticalSection m_criticalSection;
     USBManagerThread* m_usbThread;
