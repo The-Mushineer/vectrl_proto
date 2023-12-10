@@ -31,6 +31,8 @@ private:
     void OnStartWatching(wxCommandEvent& event);
     void OnStopWatching(wxCommandEvent& event);
     void OnThreadMessage(wxThreadEvent& event);
+    void OnRestoreDefaultTemplate(wxCommandEvent& event);
+    void OnApplyTemplate(wxCommandEvent& event);
 
 private:
     wxTextCtrl* m_textLogControl;

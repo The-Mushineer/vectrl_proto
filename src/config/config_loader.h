@@ -16,6 +16,8 @@ public:
     ActionsTemplate LoadActiveTemplate();
     void SaveActiveTemplate(const ActionsTemplate& template_);
 
+    ActionsTemplate GetDefaultTemplate();
+
 private:
     wxConfigBase* m_config;
     Action LoadAction(const wxString& path, const Action& defaultValue);

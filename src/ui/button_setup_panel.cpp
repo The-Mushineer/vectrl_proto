@@ -1,4 +1,5 @@
 #include "button_setup_panel.h"
+#include "ui_common.h"
 
 #ifdef __APPLE__
 const wxString s_controlLabel = wxT("^");
@@ -11,6 +12,9 @@ const wxString s_altLabel = wxT("Alt + ");
 const wxString s_shiftLabel = wxT("Shift + ");
 const wxString s_commandLabel = wxT("Win + ");
 #endif
+
+wxDEFINE_EVENT(EVT_SET_KEYSTROKE, SetKeystrokeEvent);
+wxDEFINE_EVENT(EVT_SET_ACTION, SetActionEvent);
 
 // ----------------------------------------------------------------------------
 // Auxiliary functions
@@ -391,6 +395,8 @@ ButtonActionLine::ButtonActionLine(wxWindow* parent, wxWindowID winid,
     SetupHoverEvents(m_btnClear);
     SetupHoverEvents(this);
     Bind(wxEVT_IDLE, &ButtonActionLine::OnIdle, this);
+    m_btnClear->Bind(wxEVT_BUTTON, &ButtonActionLine::OnBtnClear, this);
+    m_btnEdit->Bind(wxEVT_BUTTON, &ButtonActionLine::OnBtnEdit, this);
 }
 
 void ButtonActionLine::SetLabel(const wxString& label) {
@@ -422,6 +428,7 @@ void ButtonActionLine::SetKeystroke(const Keystroke& keystroke) {
         keystrokeString += GetKeyName(keystroke.key, keystroke.isCharacter);
         m_keystrokeDisplayControl->SetLabel(keystrokeString);
     }
+    Layout();
 }
 
 void ButtonActionLine::SetupHoverEvents(wxWindow* window) {
@@ -453,6 +460,17 @@ void ButtonActionLine::OnIdle(wxIdleEvent& event) {
     }
 }
 
+void ButtonActionLine::OnBtnEdit(wxCommandEvent& event) {
+}
+
+void ButtonActionLine::OnBtnClear(wxCommandEvent& event) {
+    SetKeystrokeEvent newEvent{EVT_SET_KEYSTROKE, GetId()};
+    SetKeystroke(KEYSTROKE_NONE);
+    newEvent.SetKeystroke(m_keystroke);
+    newEvent.SetModifierNumber(m_ownModifierNumber);
+    AddPendingEvent(newEvent);
+}
+
 // ----------------------------------------------------------------------------
 // ButtonActionPanel
 // ----------------------------------------------------------------------------
@@ -462,7 +480,8 @@ ButtonActionPanel::ButtonActionPanel(wxWindow* parent, wxWindowID winid,
                                      std::vector<ButtonInfo> availableModifiers,
                                      const wxPoint& pos, const wxSize& size)
     : wxPanel(parent, winid, pos, size),
-      m_availableModifiers(availableModifiers) {
+      m_availableModifiers(availableModifiers),
+      m_buttonIndex(-1) {
     SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_LISTBOX));
     SetForegroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_LISTBOXTEXT));
     // Creates the main line
@@ -482,6 +501,7 @@ ButtonActionPanel::ButtonActionPanel(wxWindow* parent, wxWindowID winid,
         sizer->Add(modifierLine, wxSizerFlags().Expand());
     }
     SetSizer(sizer);
+    Bind(EVT_SET_KEYSTROKE, &ButtonActionPanel::OnSetKeystroke, this);
 }
 
 void ButtonActionPanel::SetLabel(const wxString& label) {
@@ -499,6 +519,21 @@ void ButtonActionPanel::SetAction(const Action& action) {
         m_modifierLines[i]->SetKeystroke(
             action.GetModifiedKeystroke(m_availableModifiers[i].number));
     }
+}
+
+void ButtonActionPanel::OnSetKeystroke(SetKeystrokeEvent& event) {
+    wxLogDebug("ButtonActionPanel::OnSetKeystroke - %d",
+               event.GetModifierNumber());
+    if (event.GetModifierNumber() < 0) {
+        m_action.SetKeystroke(event.GetKeystroke());
+    } else {
+        m_action.SetModifiedKeystroke(event.GetModifierNumber(),
+                                      event.GetKeystroke());
+    }
+    SetActionEvent newEvent{EVT_SET_ACTION, GetId()};
+    newEvent.SetAction(m_action);
+    newEvent.SetIndex(m_buttonIndex);
+    AddPendingEvent(newEvent);
 }
 
 // ----------------------------------------------------------------------------
@@ -580,6 +615,45 @@ void ButtonSetupPanel::SetActionsTemplate(
     }
 }
 
+void ButtonSetupPanel::OnSetButtonAction(SetActionEvent& event) {
+    if (event.GetIndex() < 0) {
+        return;
+    }
+    auto buttonNumber = m_deviceDescription.buttons[event.GetIndex()].number;
+    wxLogDebug("ButtonSetupPanel::OnSetButtonAction - %d", buttonNumber);
+    m_editingTemplate.buttonActions[buttonNumber] = event.GetAction();
+}
+
+void ButtonSetupPanel::OnSetEncoderCwAction(SetActionEvent& event) {
+    if (event.GetIndex() < 0) {
+        return;
+    }
+    auto encoderNumber = m_deviceDescription.encoders[event.GetIndex()].number;
+    wxLogDebug("ButtonSetupPanel::OnSetEncoderCwAction - %d", encoderNumber);
+    m_editingTemplate.encoderActions[encoderNumber][ENCODER_CW] =
+        event.GetAction();
+}
+
+void ButtonSetupPanel::OnSetEncoderCcwAction(SetActionEvent& event) {
+    if (event.GetIndex() < 0) {
+        return;
+    }
+    auto encoderNumber = m_deviceDescription.encoders[event.GetIndex()].number;
+    wxLogDebug("ButtonSetupPanel::OnSetEncoderCcwAction - %d", encoderNumber);
+    m_editingTemplate.encoderActions[encoderNumber][ENCODER_CCW] =
+        event.GetAction();
+}
+
+void ButtonSetupPanel::OnSetEncoderButtonAction(SetActionEvent& event) {
+    if (event.GetIndex() < 0) {
+        return;
+    }
+    auto buttonNumber =
+        m_deviceDescription.encoders[event.GetIndex()].buttonNumber;
+    wxLogDebug("ButtonSetupPanel::OnSetEncoderButtonAction - %d", buttonNumber);
+    m_editingTemplate.buttonActions[buttonNumber] = event.GetAction();
+}
+
 wxStaticText* ButtonSetupPanel::CreateSectionLabel(const wxString& label) {
     wxStaticText* sectionLabel = new wxStaticText(this, wxID_ANY, label);
     sectionLabel->SetFont(wxFont(wxNORMAL_FONT->GetPointSize(),
@@ -598,8 +672,12 @@ ButtonActionPanel* ButtonSetupPanel::CreateButtonActionPanel(
                        });
     availableModifiers.erase(remove_iterator, availableModifiers.end());
     // Creates the action panel for the button
-    return new ButtonActionPanel(this, wxID_ANY, button.label,
-                                 availableModifiers);
+    auto result =
+        new ButtonActionPanel(this, wxID_ANY, button.label, availableModifiers);
+    // Events
+    result->SetButtonIndex(buttonNumber);
+    result->Bind(EVT_SET_ACTION, &ButtonSetupPanel::OnSetButtonAction, this);
+    return result;
 }
 
 ButtonSetupPanel::EncoderControls ButtonSetupPanel::CreateEncoderActionPanel(
@@ -621,5 +699,16 @@ ButtonSetupPanel::EncoderControls ButtonSetupPanel::CreateEncoderActionPanel(
     // Creates the action panels for pressing the encoder
     encoderControls.button =
         new ButtonActionPanel(this, wxID_ANY, wxT("Press"), availableModifiers);
+
+    // Events
+    encoderControls.cw->SetButtonIndex(encoderNumber);
+    encoderControls.ccw->SetButtonIndex(encoderNumber);
+    encoderControls.button->SetButtonIndex(encoderNumber);
+    encoderControls.cw->Bind(EVT_SET_ACTION,
+                             &ButtonSetupPanel::OnSetEncoderCwAction, this);
+    encoderControls.ccw->Bind(EVT_SET_ACTION,
+                              &ButtonSetupPanel::OnSetEncoderCcwAction, this);
+    encoderControls.button->Bind(
+        EVT_SET_ACTION, &ButtonSetupPanel::OnSetEncoderButtonAction, this);
     return encoderControls;
 }

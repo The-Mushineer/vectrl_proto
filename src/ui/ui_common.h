@@ -16,6 +16,8 @@ enum {
     // Menu items
     App_Quit = wxID_EXIT,
     App_About = wxID_ABOUT,
+    App_RestoreDefaultTemplate = wxID_RESET,
+    App_ApplyTemplate = wxID_APPLY,
     App_StartWatching = 101,
     App_StopWatching,
     // Thread commands

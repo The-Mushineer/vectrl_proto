@@ -130,3 +130,17 @@ void ConfigLoader::SaveActiveTemplate(const ActionsTemplate& template_) {
     }
     m_config->SetPath(strOldPath);
 }
+
+ActionsTemplate ConfigLoader::GetDefaultTemplate() {
+    ActionsTemplate template_;
+    for (int i = 0; i < MAX_BUTTONS; i++) {
+        template_.buttonActions[i] = DEFAULT_BUTTON_ACTIONS[i];
+    }
+    for (int i = 0; i < MAX_ENCODERS; i++) {
+        template_.encoderActions[i][ENCODER_CW] =
+            DEFAULT_ENCODER_ACTIONS[i][ENCODER_CW];
+        template_.encoderActions[i][ENCODER_CCW] =
+            DEFAULT_ENCODER_ACTIONS[i][ENCODER_CCW];
+    }
+    return template_;
+}

@@ -10,6 +10,8 @@ wxBEGIN_EVENT_TABLE(MainFrame, wxFrame)
     EVT_MENU(App_About, MainFrame::OnAbout)
     EVT_MENU(App_StartWatching, MainFrame::OnStartWatching)
     EVT_MENU(App_StopWatching, MainFrame::OnStopWatching)
+    EVT_BUTTON(App_RestoreDefaultTemplate, MainFrame::OnRestoreDefaultTemplate)
+    EVT_BUTTON(App_ApplyTemplate, MainFrame::OnApplyTemplate)
     EVT_THREAD(wxID_ANY, MainFrame::OnThreadMessage)
 wxEND_EVENT_TABLE()
 
@@ -55,7 +57,14 @@ MainFrame::MainFrame(const wxString& title)
     SetStatusText("Video Editing Controller");
 #endif  // wxUSE_STATUSBAR
 
-    // Create a panel to hold the button setup
+    // Buttons to apply and reset
+    wxPanel* buttonPanel = new wxPanel(this, wxID_ANY);
+    wxButton* restoreDefaultTemplateBtn =
+        new wxButton(buttonPanel, App_RestoreDefaultTemplate, "Default");
+    wxButton* applyTemplateBtn =
+        new wxButton(buttonPanel, App_ApplyTemplate, "Apply");
+
+    // Create a panel to hold the actions setup
     m_buttonSetupPanel =
         new ButtonSetupPanel(this, wxID_ANY, VECTRL_PROTO_DESCRIPTION);
     m_buttonSetupPanel->SetActionsTemplate(m_currentTemplate);
@@ -77,8 +86,15 @@ MainFrame::MainFrame(const wxString& title)
     m_textLogControl->SetFocus();
 
     // layout and show the frame
+    wxBoxSizer* btnSizer = new wxBoxSizer(wxHORIZONTAL);
+    btnSizer->AddStretchSpacer();
+    btnSizer->Add(restoreDefaultTemplateBtn,
+                  wxSizerFlags().Border(wxTOP | wxBOTTOM | wxLEFT, 8).Expand());
+    btnSizer->Add(applyTemplateBtn, wxSizerFlags().Border(wxALL, 8).Expand());
+    buttonPanel->SetSizer(btnSizer);
     wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
     sizer->Add(m_buttonSetupPanel, wxSizerFlags(1).Expand());
+    sizer->Add(buttonPanel, wxSizerFlags().Left().Expand());
     sizer->Add(header, wxSizerFlags().Expand());
     sizer->Add(m_textLogControl, wxSizerFlags().Expand());
     SetSizer(sizer);
@@ -160,4 +176,17 @@ void MainFrame::OnStopWatching(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void MainFrame::OnThreadMessage(wxThreadEvent& event) {
+}
+
+void MainFrame::OnRestoreDefaultTemplate(wxCommandEvent& event) {
+    m_currentTemplate = m_configLoader.GetDefaultTemplate();
+    m_configLoader.SaveActiveTemplate(m_currentTemplate);
+    m_buttonSetupPanel->SetActionsTemplate(m_currentTemplate);
+    m_actions.LoadTemplate(m_currentTemplate);
+}
+
+void MainFrame::OnApplyTemplate(wxCommandEvent& event) {
+    m_currentTemplate = m_buttonSetupPanel->GetActionsTemplate();
+    m_configLoader.SaveActiveTemplate(m_currentTemplate);
+    m_actions.LoadTemplate(m_currentTemplate);
 }
