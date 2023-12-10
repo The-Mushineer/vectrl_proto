@@ -37,6 +37,12 @@ private:
     wxBitmapButton* m_btnEdit;
     wxBitmapButton* m_btnClear;
     int m_ownModifierNumber;
+    int m_mouseEnterCount;
+    bool m_mouseInside;
+    void SetupHoverEvents(wxWindow* window);
+    void OnMouseEnter(wxMouseEvent& event);
+    void OnMouseLeave(wxMouseEvent& event);
+    void OnIdle(wxIdleEvent& event);
 };
 
 class ButtonActionPanel : public wxPanel {

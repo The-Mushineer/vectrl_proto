@@ -15,7 +15,7 @@ const wxString s_commandLabel = wxT("Win + ");
 // ----------------------------------------------------------------------------
 // Auxiliary functions
 // ----------------------------------------------------------------------------
-wxString GetKeyName(int key) {
+wxString GetKeyName(int key, bool isCharacter) {
     switch (key) {
         case WXK_BACK:
 #ifdef __WXOSX__
@@ -25,12 +25,17 @@ wxString GetKeyName(int key) {
 #endif
         case WXK_TAB:
             return wxT("Tab");
-        case WXK_RETURN:
-            return wxT("Enter");
-        case WXK_ESCAPE:
-            return wxT("Esc");
         case WXK_SPACE:
             return wxT("Space");
+        case WXK_RETURN:
+            return wxT("Enter");
+    };
+    if (isCharacter) {
+        return (wchar_t)key;
+    }
+    switch (key) {
+        case WXK_ESCAPE:
+            return wxT("Esc");
         case WXK_DELETE:
 #ifdef __WXOSX__
             return wxT("Delete (forward)");
@@ -350,7 +355,12 @@ wxString GetKeyName(int key) {
 ButtonActionLine::ButtonActionLine(wxWindow* parent, wxWindowID winid,
                                    const wxString& label, const wxPoint& pos,
                                    const wxSize& size)
-    : wxPanel(parent, winid, pos, size), m_ownModifierNumber(-1) {
+    : wxPanel(parent, winid, pos, size),
+      m_ownModifierNumber(-1),
+      m_mouseEnterCount(0),
+      m_mouseInside(false) {
+    SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_LISTBOX));
+    SetForegroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_LISTBOXTEXT));
     m_labelControl = new wxStaticText(this, wxID_ANY, label);
     // m_labelControl->SetSizeHints(wxSize(100, -1));
     m_keystrokeDisplayControl =
@@ -374,6 +384,13 @@ ButtonActionLine::ButtonActionLine(wxWindow* parent, wxWindowID winid,
     sizer->Add(m_btnEdit, wxSizerFlags().Center().Border(wxALL, 4));
     sizer->Add(m_btnClear, wxSizerFlags().Center().Border(wxALL, 4));
     SetSizer(sizer);
+    // Events
+    SetupHoverEvents(m_labelControl);
+    SetupHoverEvents(m_keystrokeDisplayControl);
+    SetupHoverEvents(m_btnEdit);
+    SetupHoverEvents(m_btnClear);
+    SetupHoverEvents(this);
+    Bind(wxEVT_IDLE, &ButtonActionLine::OnIdle, this);
 }
 
 void ButtonActionLine::SetLabel(const wxString& label) {
@@ -402,12 +419,38 @@ void ButtonActionLine::SetKeystroke(const Keystroke& keystroke) {
         if (keystroke.modifiers & Keystroke::Command) {
             keystrokeString += s_commandLabel;
         }
-        if (keystroke.isCharacter) {
-            keystrokeString += keystroke.key;
-        } else {
-            keystrokeString += GetKeyName(keystroke.key);
-        }
+        keystrokeString += GetKeyName(keystroke.key, keystroke.isCharacter);
         m_keystrokeDisplayControl->SetLabel(keystrokeString);
+    }
+}
+
+void ButtonActionLine::SetupHoverEvents(wxWindow* window) {
+    window->Bind(wxEVT_ENTER_WINDOW, &ButtonActionLine::OnMouseEnter, this);
+    window->Bind(wxEVT_LEAVE_WINDOW, &ButtonActionLine::OnMouseLeave, this);
+}
+
+void ButtonActionLine::OnMouseEnter(wxMouseEvent& event) {
+    m_mouseEnterCount++;
+}
+
+void ButtonActionLine::OnMouseLeave(wxMouseEvent& event) {
+    m_mouseEnterCount--;
+}
+
+void ButtonActionLine::OnIdle(wxIdleEvent& event) {
+    bool newMouseInside = m_mouseEnterCount > 0;
+    if (newMouseInside != m_mouseInside) {
+        wxLogDebug("Idle: %d", m_mouseEnterCount);
+        m_mouseInside = newMouseInside;
+        SetBackgroundColour(
+            m_mouseInside
+                ? wxSystemSettings::GetColour(wxSYS_COLOUR_MENUHILIGHT)
+                : wxSystemSettings::GetColour(wxSYS_COLOUR_LISTBOX));
+        SetForegroundColour(
+            m_mouseInside
+                ? wxSystemSettings::GetColour(wxSYS_COLOUR_LISTBOXHIGHLIGHTTEXT)
+                : wxSystemSettings::GetColour(wxSYS_COLOUR_LISTBOXTEXT));
+        Refresh();
     }
 }
 
@@ -421,7 +464,8 @@ ButtonActionPanel::ButtonActionPanel(wxWindow* parent, wxWindowID winid,
                                      const wxPoint& pos, const wxSize& size)
     : wxPanel(parent, winid, pos, size),
       m_availableModifiers(availableModifiers) {
-    SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW));
+    SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_LISTBOX));
+    SetForegroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_LISTBOXTEXT));
     // Creates the main line
     m_mainLine = new ButtonActionLine(this, wxID_ANY, label);
     m_mainLine->SetOwnModifierNumber(-1);
@@ -436,7 +480,7 @@ ButtonActionPanel::ButtonActionPanel(wxWindow* parent, wxWindowID winid,
     wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
     sizer->Add(m_mainLine, wxSizerFlags().Expand());
     for (auto& modifierLine : m_modifierLines) {
-        sizer->Add(modifierLine, wxSizerFlags().Border(wxLEFT, 16).Expand());
+        sizer->Add(modifierLine, wxSizerFlags().Expand());
     }
     SetSizer(sizer);
 }
@@ -469,7 +513,7 @@ ButtonSetupPanel::ButtonSetupPanel(
     : wxScrolled<wxPanel>(parent, winid, pos, size,
                           wxScrolledWindowStyle | wxTAB_TRAVERSAL),
       m_deviceDescription(deviceDescription) {
-    SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_3DFACE));
+    SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_FRAMEBK));
     SetScrollRate(5, 5);
     // Computes the list of available modifiers
     auto allAvailableModifiers = m_deviceDescription.buttons;
