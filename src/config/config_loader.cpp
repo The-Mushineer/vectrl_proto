@@ -55,8 +55,7 @@ Action ConfigLoader::LoadAction(const wxString& path,
     if (key.starts_with(wxT("0x"))) {
         action.SetKeystroke(Keystroke(GetLongFromHex(key), flags));
     } else {
-        auto unicodeKey = key.ToStdWstring();
-        wchar_t keyChar = unicodeKey.length() > 0 ? unicodeKey[0] : wxT('\0');
+        wxUniChar keyChar = key.length() > 0 ? key[0].GetValue() : wxT('\0');
         action.SetKeystroke(Keystroke(keyChar, flags));
     }
     m_config->Read(wxT("ModifierCount"), &modCount, 0);
@@ -71,9 +70,8 @@ Action ConfigLoader::LoadAction(const wxString& path,
             action.SetModifiedKeystroke(modifier,
                                         Keystroke(GetLongFromHex(key), flags));
         } else {
-            auto unicodeKey = key.ToStdWstring();
-            wchar_t keyChar =
-                unicodeKey.length() > 0 ? unicodeKey[0] : wxT('\0');
+            wxUniChar keyChar =
+                key.length() > 0 ? key[0].GetValue() : wxT('\0');
             action.SetModifiedKeystroke(modifier, Keystroke(keyChar, flags));
         }
     }

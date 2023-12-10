@@ -26,6 +26,8 @@ struct Keystroke {
         : key(_key), isCharacter(false), modifiers(_modifiers){};
     constexpr Keystroke(wchar_t _key, uint8_t _modifiers = 0)
         : key(_key), isCharacter(true), modifiers(_modifiers){};
+    Keystroke(wxUniChar _key, uint8_t _modifiers = 0)
+        : key(_key.GetValue()), isCharacter(true), modifiers(_modifiers){};
 
     bool operator==(const Keystroke& other) const {
         return key == other.key && modifiers == other.modifiers;
