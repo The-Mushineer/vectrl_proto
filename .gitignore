@@ -1,6 +1,9 @@
 # Prerequisites
 *.d
 
+# Compiled Resource files
+*.aps
+
 # Compiled Object files
 *.slo
 *.lo

@@ -42,6 +42,7 @@ set(SRC_FILES
 
 set(SRC_FILES_WIN
     src/common/actions_win.cpp
+    src/resources.rc
     )
 
 set(SRC_FILES_LINUX)
