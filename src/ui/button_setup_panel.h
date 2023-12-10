@@ -93,6 +93,10 @@ private:
     std::vector<wxStaticText*> m_sectionLabels;
 
     wxStaticText* CreateSectionLabel(const wxString& label);
+    ButtonActionPanel* CreateButtonActionPanel(
+        int buttonNumber, std::vector<ButtonInfo> availableModifiers);
+    EncoderControls CreateEncoderActionPanel(
+        int encoderNumber, std::vector<ButtonInfo> availableModifiers);
 };
 
 #endif

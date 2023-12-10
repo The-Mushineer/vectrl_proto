@@ -515,38 +515,27 @@ ButtonSetupPanel::ButtonSetupPanel(
       m_deviceDescription(deviceDescription) {
     SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_FRAMEBK));
     SetScrollRate(5, 5);
-    // Computes the list of available modifiers
+    // Computes the list of available modifiers by joining the list of
+    // encoder buttons and regular buttons.
     auto allAvailableModifiers = m_deviceDescription.buttons;
     for (auto& encoder : m_deviceDescription.encoders) {
+        if (encoder.buttonNumber < 0) {
+            continue;
+        }
         struct ButtonInfo encoderButton = {
             encoder.buttonNumber,
             encoder.label + wxT(" (pressed)"),
         };
         allAvailableModifiers.push_back(encoderButton);
     }
-    std::vector<ButtonInfo> availableModifiers;
     // Layouts while creating the controls
     wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
     // Creates the action panels for encoders
-    for (auto& encoder : m_deviceDescription.encoders) {
-        EncoderControls encoderControls;
-        wxStaticText* label = CreateSectionLabel(encoder.label);
-        // Computes the list of available modifiers for the encoder button
-        availableModifiers = allAvailableModifiers;
-        auto remove_iterator = std::remove_if(
-            availableModifiers.begin(), availableModifiers.end(),
-            [encoder](ButtonInfo& modifierButton) {
-                return modifierButton.number == encoder.buttonNumber;
-            });
-        availableModifiers.erase(remove_iterator, availableModifiers.end());
-        // Creates the action panels for turning the encoder
-        encoderControls.cw = new ButtonActionPanel(
-            this, wxID_ANY, wxT("Turn clockwise"), allAvailableModifiers);
-        encoderControls.ccw = new ButtonActionPanel(
-            this, wxID_ANY, wxT("Turn clockwise"), allAvailableModifiers);
-        // Creates the action panels for pressing the encoder
-        encoderControls.button = new ButtonActionPanel(
-            this, wxID_ANY, wxT("Press"), availableModifiers);
+    for (size_t idx = 0; idx < m_deviceDescription.encoders.size(); idx++) {
+        wxStaticText* label =
+            CreateSectionLabel(m_deviceDescription.encoders[idx].label);
+        EncoderControls encoderControls =
+            CreateEncoderActionPanel(idx, allAvailableModifiers);
         // Layout
         sizer->Add(label, wxSizerFlags().Border(wxALL, 8).Expand());
         sizer->Add(encoderControls.cw, wxSizerFlags().Expand());
@@ -560,18 +549,9 @@ ButtonSetupPanel::ButtonSetupPanel(
     wxStaticText* buttonSectionLabel = CreateSectionLabel(wxT("Buttons"));
     sizer->Add(buttonSectionLabel, wxSizerFlags().Border(wxALL, 8).Expand());
     m_sectionLabels.push_back(buttonSectionLabel);
-    for (auto& button : m_deviceDescription.buttons) {
-        // Computes the list of available modifiers for the button
-        availableModifiers = allAvailableModifiers;
-        auto remove_iterator =
-            std::remove_if(availableModifiers.begin(), availableModifiers.end(),
-                           [button](ButtonInfo& modifierButton) {
-                               return modifierButton.number == button.number;
-                           });
-        availableModifiers.erase(remove_iterator, availableModifiers.end());
-        // Creates the action panel for the button
-        ButtonActionPanel* buttonPanel = new ButtonActionPanel(
-            this, wxID_ANY, button.label, availableModifiers);
+    for (size_t idx = 0; idx < m_deviceDescription.buttons.size(); idx++) {
+        ButtonActionPanel* buttonPanel =
+            CreateButtonActionPanel(idx, allAvailableModifiers);
         // Layout
         sizer->Add(buttonPanel, wxSizerFlags().Expand());
 
@@ -607,4 +587,40 @@ wxStaticText* ButtonSetupPanel::CreateSectionLabel(const wxString& label) {
                                  wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL,
                                  wxFONTWEIGHT_BOLD, false, wxEmptyString));
     return sectionLabel;
+}
+
+ButtonActionPanel* ButtonSetupPanel::CreateButtonActionPanel(
+    int buttonNumber, std::vector<ButtonInfo> availableModifiers) {
+    const auto& button = m_deviceDescription.buttons[buttonNumber];
+    auto remove_iterator =
+        std::remove_if(availableModifiers.begin(), availableModifiers.end(),
+                       [button](ButtonInfo& modifierButton) {
+                           return modifierButton.number == button.number;
+                       });
+    availableModifiers.erase(remove_iterator, availableModifiers.end());
+    // Creates the action panel for the button
+    return new ButtonActionPanel(this, wxID_ANY, button.label,
+                                 availableModifiers);
+}
+
+ButtonSetupPanel::EncoderControls ButtonSetupPanel::CreateEncoderActionPanel(
+    int encoderNumber, std::vector<ButtonInfo> availableModifiers) {
+    EncoderControls encoderControls;
+    const auto& encoder = m_deviceDescription.encoders[encoderNumber];
+    // Creates the action panels for turning the encoder
+    encoderControls.cw = new ButtonActionPanel(
+        this, wxID_ANY, wxT("Turn clockwise"), availableModifiers);
+    encoderControls.ccw = new ButtonActionPanel(
+        this, wxID_ANY, wxT("Turn clockwise"), availableModifiers);
+    // Computes the list of available modifiers for the encoder button
+    auto remove_iterator =
+        std::remove_if(availableModifiers.begin(), availableModifiers.end(),
+                       [encoder](ButtonInfo& modifierButton) {
+                           return modifierButton.number == encoder.buttonNumber;
+                       });
+    availableModifiers.erase(remove_iterator, availableModifiers.end());
+    // Creates the action panels for pressing the encoder
+    encoderControls.button =
+        new ButtonActionPanel(this, wxID_ANY, wxT("Press"), availableModifiers);
+    return encoderControls;
 }
