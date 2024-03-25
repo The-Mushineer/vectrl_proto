@@ -49,12 +49,18 @@ Actions::Actions() : m_buttonActions(), m_encoderActions(), m_pressedButtons() {
 
 Keystroke Actions::GetButtonKeystroke(uint8_t button) {
     wxCriticalSectionLocker locker(m_actionsCriticalSection);
+    if (button > GetButtonCount()) {
+        return KEYSTROKE_NONE;
+    }
     return m_buttonActions[button].GetDesiredKeystroke(m_pressedButtons);
 }
 
 Keystroke Actions::GetEncoderKeystroke(uint8_t encoder,
                                        EncoderDirection direction) {
     wxCriticalSectionLocker locker(m_actionsCriticalSection);
+    if (encoder > GetEncoderCount()) {
+        return KEYSTROKE_NONE;
+    }
     return m_encoderActions[encoder][direction].GetDesiredKeystroke(
         m_pressedButtons);
 }

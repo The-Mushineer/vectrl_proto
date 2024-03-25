@@ -13,7 +13,7 @@
 #include <map>
 #include <unordered_set>
 
-const size_t MAX_BUTTONS = 8;
+const size_t MAX_BUTTONS = 16;
 const size_t MAX_ENCODERS = 2;
 
 struct Keystroke {

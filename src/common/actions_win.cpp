@@ -18,7 +18,8 @@ void issueKeystroke(Keystroke keystroke, bool pressed) {
     bool isExtended = false;
     WORD keyCode = 0;
     if (keystroke.isCharacter) {
-        keyCode = VkKeyScanW(keystroke.key);
+        wxUniChar uc(keystroke.key);
+        keyCode = VkKeyScanW((wchar_t)uc);
     } else {
         keyCode = wxMSWKeyboard::WXToVK(keystroke.key, &isExtended);
     }
